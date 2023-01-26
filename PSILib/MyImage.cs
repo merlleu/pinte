@@ -1,12 +1,11 @@
-﻿using System;
-using System.Text;
-
-namespace PSILib
+﻿namespace PSILib
 {
+    
     public class MyImage
     {
+
         #region Properties
-        public string Type { get; set; }
+        public byte[] Type { get; set; }
         public int Size { get; set; }
         public int Offset { get; set; }
 
@@ -27,25 +26,30 @@ namespace PSILib
 
         public MyImage(string path) {
             var bytes = File.ReadAllBytes(path);
+            if (bytes.Length < 54) {
+                throw new Exception("File is too small.");
+            }
+
             // headers
-            Type = Encoding.ASCII.GetString(bytes, 0, 2);
+            Type = new byte[2];
+            Array.Copy(bytes, 0, Type, 0, 2);
             // check if it's a BMP file
-            if (Type != "BM") {
+            if (Type[0] != 66 || Type[1] != 77) {
                 throw new Exception("Not a BMP file");
             }
-            
-            Size = BitConverter.ToInt32(bytes, 2);
-            Offset = BitConverter.ToInt32(bytes, 10);
+
+            Size = Convertir_Endian_To_Int(bytes, 4, 2);
+            Offset = Convertir_Endian_To_Int(bytes, 4, 10);
 
             // DIB Header
-            DIBHeaderSize = BitConverter.ToInt32(bytes, 14);
+            DIBHeaderSize = Convertir_Endian_To_Int(bytes, 4, 14);
             if (DIBHeaderSize != 40) {
                 throw new Exception("DIB Header size must be 40.");
             }
 
-            Width = BitConverter.ToInt32(bytes, 18);
-            Height = BitConverter.ToInt32(bytes, 22);
-            BitsPerPixel = BitConverter.ToInt16(bytes, 28);
+            Width = Convertir_Endian_To_Int(bytes, 4, 18);
+            Height = Convertir_Endian_To_Int(bytes, 4, 22);
+            BitsPerPixel = Convertir_Endian_To_Int(bytes, 2, 28);
 
             // we don't handle less than 1 byte per pixel
             if (BitsPerPixel != 24) {
@@ -76,6 +80,11 @@ namespace PSILib
         #endregion
 
         #region Serialization
+        /// <summary>
+        /// Deserialize a BMP grid from a byte array.
+        /// </summary>
+        /// <param name="bytes">The byte array to deserialize</param>
+        /// <returns>A 2D array of pixels</returns>
         private Pixel[,] ParsePixels(byte[] bytes) {
             int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
             Size = Offset + RowSize * Height;
@@ -137,7 +146,6 @@ namespace PSILib
         /// <param name="bits">The size of the integer in bits</param>
         /// <param name="pos">The position in the array</param>
         /// <param name="tab">The array</param>
-        /// 
         private void Convertir_Int_To_Endian(int val, byte[] tab, int bytes, int pos) {
             // convert n bits from tab[pos] to a little endian int
             for (int i = 0; i < bytes; i++) {
@@ -153,16 +161,14 @@ namespace PSILib
 
             var bytes = new byte[Size];
             // headers
-            Encoding.ASCII.GetBytes(Type).CopyTo(bytes, 0);
-            BitConverter.GetBytes(Size).CopyTo(bytes, 2);
-            BitConverter.GetBytes(Offset).CopyTo(bytes, 10);
-
-            // DIB Header
-            BitConverter.GetBytes(DIBHeaderSize).CopyTo(bytes, 14);
-            BitConverter.GetBytes(Width).CopyTo(bytes, 18);
-            BitConverter.GetBytes(Height).CopyTo(bytes, 22);
-            BitConverter.GetBytes((Int16)1).CopyTo(bytes, 26);
-            BitConverter.GetBytes((Int16)BitsPerPixel).CopyTo(bytes, 28);
+            Type.CopyTo(bytes, 0);
+            Convertir_Int_To_Endian(Size, bytes, 4, 2);
+            Convertir_Int_To_Endian(Offset, bytes, 4, 10);
+            Convertir_Int_To_Endian(DIBHeaderSize, bytes, 4, 14);
+            Convertir_Int_To_Endian(Width, bytes, 4, 18);
+            Convertir_Int_To_Endian(Height, bytes, 4, 22);
+            Convertir_Int_To_Endian(1, bytes, 2, 26);
+            Convertir_Int_To_Endian(BitsPerPixel, bytes, 2, 28);
 
             int pos = Offset;
 
@@ -184,7 +190,6 @@ namespace PSILib
         #endregion
 
         #region Operations
-
         public void Invert() {
             for (int i = 0; i < Height; i++) {
                 for (int j = 0; j < Width; j++) {
@@ -210,6 +215,7 @@ namespace PSILib
 
         public void Rotate(int n = 1) {
             if (n < 0) n = 2 - n;
+            n %= 4;
             for (int i = 0; i < n; i++) {
                 Rotate();
             }
@@ -220,18 +226,42 @@ namespace PSILib
         /// </summary>
         /// <param name="factor">The factor</param>
         public void Resize(double factor) {
+            if (factor == 1) return;
+
             Pixel[,] newPixels = new Pixel[(int) (Height * factor), (int) (Width * factor)];
-            for (int i = 0; i < newPixels.GetLength(0); i++) {
-                for (int j = 0; j < newPixels.GetLength(1); j++) {
-                    int x = (int) (i / factor);
-                    int y = (int) (j / factor);
-                    newPixels[i, j] = Pixels[x, y];
+            
+            if (factor > 1) {
+                for (int i = 0; i < Height; i++) {
+                    for (int j = 0; j < Width; j++) {
+                        // to upscale, we just duplicate the pixels
+                        for (int k = 0; k < factor; k++) {
+                            for (int l = 0; l < factor; l++) {
+                                newPixels[(int) (i * factor + k), (int) (j * factor + l)] = Pixels[i, j].Clone();
+                            }
+                        }
+                    }
+                }
+            } else {
+                int factor_inv = (int) (1/factor);
+                // to downscale, each pixel in the new image is the average of factor_inv^2 pixels in the old image
+                for (int i = 0; i < newPixels.GetLength(0); i++) {
+                    for (int j = 0; j < newPixels.GetLength(1); j++) {
+                        int r = 0, g = 0, b = 0;
+                        for (int k = 0; k < factor_inv; k++) {
+                            for (int l = 0; l < factor_inv; l++) {
+                                r += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Red;
+                                g += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Green;
+                                b += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Blue;
+                            }
+                        }
+                        newPixels[i, j] = new Pixel((byte) (b / (factor_inv * factor_inv)), (byte) (g / (factor_inv * factor_inv)), (byte) (r / (factor_inv * factor_inv)));
+                    }
                 }
             }
+            
             Height = newPixels.GetLength(0);
             Width = newPixels.GetLength(1);
             Pixels = newPixels;
-            Size = Offset + Width * Height * BytesPerPixel;
         }
 
         /// <summary>
@@ -263,10 +293,7 @@ namespace PSILib
         public void Grayscale() {
             for (int i = 0; i < Height; i++) {
                 for (int j = 0; j < Width; j++) {
-                    int gray = (int) (Pixels[i, j].Red * 0.33 + Pixels[i, j].Green * 0.33 + Pixels[i, j].Blue * 0.33);
-                    Pixels[i, j].Red = gray;
-                    Pixels[i, j].Green = gray;
-                    Pixels[i, j].Blue = gray;
+                    Pixels[i, j].Grayscale();
                 }
             }
         }
@@ -353,7 +380,11 @@ namespace PSILib
         
         
 
-
+        /// <summary>
+        /// Apply the `mat` matrix to the image.
+        /// </summary>
+        /// <param name="mat">The matrix to apply</param>
+        /// <param name="div">The divisor</param>
         public void Convolution(int[,] mat, int div = 1) {
             Pixel[,] newPixels = new Pixel[Height, Width];
             for (int i = 0; i < Height; i++) {
@@ -392,11 +423,7 @@ namespace PSILib
             Pixel[,] newPixels = new Pixel[Height, Width];
             for (int i = 0; i < Height; i++) {
                 for (int j = 0; j < Width; j++) {
-                    newPixels[i, j] = new Pixel(
-                        Pixels[i, j].Blue,
-                        Pixels[i, j].Green,
-                        Pixels[i, j].Red
-                    );
+                    newPixels[i, j] = Pixels[i, j].Clone();
                 }
             }
 

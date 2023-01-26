@@ -15,7 +15,7 @@ namespace ConsoleApp
             // img.Resize(2);
             // img.Rotate();
             // img.Rotate();
-            img.Save("../resources/OUT2.BMP");
+            img.Save("../resources/Crop.BMP");
 
             var img2 = img.Clone();
             img2.GaussianBlur3();
@@ -37,6 +37,21 @@ namespace ConsoleApp
             img2.UnsharpMask5();
             img2.Save("../resources/UnsharpMask5.BMP");
 
+            img2 = img.Clone();
+            img2.Resize(2);
+            img2.Save("../resources/Resize2.BMP");
+
+            img2 = img.Clone();
+            img2.Resize(0.5);
+            img2.Save("../resources/Resize05.BMP");
+
+            img2 = img.Clone();
+            img2.Resize(1.25);
+            img2.Save("../resources/Resize125.BMP");
+
+            img2 = img.Clone();
+            img2.Resize(0.25);
+            img2.Save("../resources/Resize025.BMP");
 
             
             
