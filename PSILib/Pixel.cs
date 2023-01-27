@@ -1,20 +1,25 @@
 namespace PSILib {
     public class Pixel {
         #region Properties
-        public int Red { get; set; }
-        public int Green { get; set; }
-        public int Blue { get; set; }
+        public byte Red { get; set; }
+        public byte Green { get; set; }
+        public byte Blue { get; set; }
+
+        /// <summary>
+        /// Alpha channel (optional) is the opacity of the pixel
+
+        // public byte Alpha { get; set; }
         #endregion
 
         #region Constructors
-        public Pixel(int blue, int green, int red)
+        public Pixel(byte blue, byte green, byte red)
         {
             Red = red;
             Green = green;
             Blue = blue;
         }
 
-        public Pixel(int color)
+        public Pixel(byte color)
         {
             Red = color;
             Green = color;
@@ -34,14 +39,14 @@ namespace PSILib {
         #region filters
         public void Invert()
         {
-            Red = 255 - Red;
-            Green = 255 - Green;
-            Blue = 255 - Blue;
+            Red = (byte)(255 - Red);
+            Green = (byte)(255 - Green);
+            Blue = (byte)(255 - Blue);
         }
         
         public void Grayscale()
         {
-            int avg = (Red + Green + Blue) / 3;
+            byte avg = (byte)((Red + Green + Blue) / 3);
             Red = avg;
             Green = avg;
             Blue = avg;

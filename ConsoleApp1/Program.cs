@@ -9,7 +9,7 @@ namespace ConsoleApp
             PSILib.MyImage img = new PSILib.MyImage("../resources/WL1.BMP");
             // img.Invert();
             img.Rotate(); 
-            img.Crop(0, 500, 300, 800);
+            img.Crop(0, 2000, 700, 700);
             img.Rotate(-1);
 
             // img.Resize(2);
@@ -26,8 +26,12 @@ namespace ConsoleApp
             img2.Save("../resources/GaussianBlur5.BMP");
 
             img2 = img.Clone();
-            img2.EdgeDetection();
+            img2.EdgeDetection(gray: false);
             img2.Save("../resources/EdgeDetection.BMP");
+            
+            img2 = img.Clone();
+            img2.EdgeDetection();
+            img2.Save("../resources/EdgeDetectionGray.BMP");
 
             img2 = img.Clone();
             img2.Sharpen();
@@ -42,19 +46,21 @@ namespace ConsoleApp
             img2.Save("../resources/Resize2.BMP");
 
             img2 = img.Clone();
-            img2.Resize(0.5);
-            img2.Save("../resources/Resize05.BMP");
-
-            img2 = img.Clone();
             img2.Resize(1.25);
             img2.Save("../resources/Resize125.BMP");
+
+            img2 = img.Clone();
+            img2.Resize(0.5);
+            img2.Save("../resources/Resize05.BMP");
 
             img2 = img.Clone();
             img2.Resize(0.25);
             img2.Save("../resources/Resize025.BMP");
 
             
-            
+            var img3 = new PSILib.MyImage("../resources/lac.BMP");
+            img3.EdgeDetection();
+            img3.Save("../resources/lacEdge.BMP");
 
             // var gray = img.Clone();
             // gray.Grayscale();

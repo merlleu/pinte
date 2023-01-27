@@ -3,27 +3,20 @@
     
     public class MyImage
     {
-
         #region Properties
-        public byte[] Type { get; set; }
-        public int Size { get; set; }
-        public int Offset { get; set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+        public int BitsPerPixel { get; }
 
-        public int Width { get; set; }
-        public int Height { get; set; }
-
-        public int DIBHeaderSize { get; set; }
-
-        public int BitsPerPixel { get; set; }
-        private int BytesPerPixel => BitsPerPixel / 8;
-        private int BytesPerColor => BytesPerPixel / 3;
-
-        public Pixel[,] Pixels { get; set; }
-
+        private Pixel[,] Pixels;
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// Create a new image reading the file at the given path.
+        /// </summary>
+        /// <param name="path">Path to the image file.</param>
         public MyImage(string path) {
             var bytes = File.ReadAllBytes(path);
             if (bytes.Length < 54) {
@@ -31,24 +24,27 @@
             }
 
             // headers
-            Type = new byte[2];
-            Array.Copy(bytes, 0, Type, 0, 2);
             // check if it's a BMP file
-            if (Type[0] != 66 || Type[1] != 77) {
+            if (bytes[0] != 66 || bytes[1] != 77) {
                 throw new Exception("Not a BMP file");
             }
 
-            Size = Convertir_Endian_To_Int(bytes, 4, 2);
-            Offset = Convertir_Endian_To_Int(bytes, 4, 10);
+            int size = Convertir_Endian_To_Int(bytes, 4, 2);
+            int offset = Convertir_Endian_To_Int(bytes, 4, 10);
 
             // DIB Header
-            DIBHeaderSize = Convertir_Endian_To_Int(bytes, 4, 14);
-            if (DIBHeaderSize != 40) {
+            int dib_header_size = Convertir_Endian_To_Int(bytes, 4, 14);
+            if (dib_header_size != 40) {
                 throw new Exception("DIB Header size must be 40.");
             }
 
             Width = Convertir_Endian_To_Int(bytes, 4, 18);
             Height = Convertir_Endian_To_Int(bytes, 4, 22);
+            
+            if (Width * Height > 100_000_000) {
+                throw new Exception("Image is too big, this maty be a DOS attack.");
+            }
+
             BitsPerPixel = Convertir_Endian_To_Int(bytes, 2, 28);
 
             // we don't handle less than 1 byte per pixel
@@ -57,26 +53,26 @@
             }
             
             // check file length
-            if (Offset + BitsPerPixel*Width*Height/8 > bytes.Length) {
+            if (offset + BitsPerPixel*Width*Height/8 > bytes.Length) {
                 throw new Exception("File length is not correct");
             }
-            Pixels = ParsePixels(bytes);
+            Pixels = ParsePixels(bytes, offset);
         }
 
         /// <summary>
         /// Create a new image from a 2D array of pixels
         /// </summary>
-        private MyImage(MyImage image, Pixel[,] pixels) {
-            Type = image.Type;
-            Size = image.Size;
-            Offset = image.Offset;
+        private MyImage(MyImage image) {
+            Pixels = new Pixel[image.Height, image.Width];
+            for (int i = 0; i < image.Height; i++) {
+                for (int j = 0; j < image.Width; j++) {
+                    Pixels[i, j] = image.Pixels[i, j].Clone();
+                }
+            }
             Width = image.Width;
             Height = image.Height;
             BitsPerPixel = image.BitsPerPixel;
-            DIBHeaderSize = image.DIBHeaderSize;
-            Pixels = pixels;
         }
-
         #endregion
 
         #region Serialization
@@ -85,21 +81,20 @@
         /// </summary>
         /// <param name="bytes">The byte array to deserialize</param>
         /// <returns>A 2D array of pixels</returns>
-        private Pixel[,] ParsePixels(byte[] bytes) {
+        private Pixel[,] ParsePixels(byte[] bytes, int offset) {
             int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
-            Size = Offset + RowSize * Height;
+            int size = offset + RowSize * Height;
             var px = new Pixel[Height, Width];
-            int pos = Offset;
 
             for (int i = 0; i < Height; i++) {
-                pos = Offset + RowSize * i;
+                int pos = offset + RowSize * i;
                 for (int j = 0; j < Width; j++) {
                     px[i, j] = new Pixel(
-                        Convertir_Endian_To_Int(bytes, BytesPerColor, pos),
-                        Convertir_Endian_To_Int(bytes, BytesPerColor, pos + BytesPerColor),
-                        Convertir_Endian_To_Int(bytes, BytesPerColor, pos + 2 * BytesPerColor)
+                        (byte)Convertir_Endian_To_Int(bytes, 1, pos),
+                        (byte)Convertir_Endian_To_Int(bytes, 1, pos + 1),
+                        (byte)Convertir_Endian_To_Int(bytes, 1, pos + 2)
                     );
-                    pos += BytesPerPixel;
+                    pos += 3;
                 }
             }
             return px;
@@ -153,34 +148,41 @@
             }
         }
 
+        /// <summary>
+        /// Save the image to a file
+        /// </summary>
+        /// <param name="path">The path to the file</param>
         public void Save(string path) {
             int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
-            Size = Offset + RowSize * Height;
+            int dib_header_size = 40;
+            int offset = 14 + dib_header_size;
+            int size = offset + RowSize * Height;
 
             // Console.WriteLine("RowSize: " + RowSize);
 
-            var bytes = new byte[Size];
+            var bytes = new byte[size];
             // headers
-            Type.CopyTo(bytes, 0);
-            Convertir_Int_To_Endian(Size, bytes, 4, 2);
-            Convertir_Int_To_Endian(Offset, bytes, 4, 10);
-            Convertir_Int_To_Endian(DIBHeaderSize, bytes, 4, 14);
+            bytes[0] = 66;
+            bytes[1] = 77;
+            Convertir_Int_To_Endian(size, bytes, 4, 2);
+            Convertir_Int_To_Endian(offset, bytes, 4, 10);
+            Convertir_Int_To_Endian(dib_header_size, bytes, 4, 14);
             Convertir_Int_To_Endian(Width, bytes, 4, 18);
             Convertir_Int_To_Endian(Height, bytes, 4, 22);
             Convertir_Int_To_Endian(1, bytes, 2, 26);
             Convertir_Int_To_Endian(BitsPerPixel, bytes, 2, 28);
 
-            int pos = Offset;
+            int pos = offset;
 
             for (int i = 0; i < Height; i++) {
-                pos = i*RowSize + Offset;
+                pos = i*RowSize + offset;
                 for (int j = 0; j < Width; j++) {
-                    Convertir_Int_To_Endian(Pixels[i, j].Blue, bytes, BytesPerColor, pos);
-                    pos += BytesPerColor;
-                    Convertir_Int_To_Endian(Pixels[i, j].Green, bytes, BytesPerColor, pos);
-                    pos += BytesPerColor;
-                    Convertir_Int_To_Endian(Pixels[i, j].Red, bytes, BytesPerColor, pos);
-                    pos += BytesPerColor;
+                    Convertir_Int_To_Endian(Pixels[i, j].Blue, bytes, 1, pos);
+                    pos += 1;
+                    Convertir_Int_To_Endian(Pixels[i, j].Green, bytes, 1, pos);
+                    pos += 1;
+                    Convertir_Int_To_Endian(Pixels[i, j].Red, bytes, 1, pos);
+                    pos += 1;
                 }
             }
 
@@ -190,14 +192,6 @@
         #endregion
 
         #region Operations
-        public void Invert() {
-            for (int i = 0; i < Height; i++) {
-                for (int j = 0; j < Width; j++) {
-                    Pixels[i, j].Invert();
-                }
-            }
-        }
-
         /// <summary>
         /// Rotate the image by 90 degrees.
         /// </summary>
@@ -223,6 +217,9 @@
 
         /// <summary>
         /// Resize the image by a factor.
+        /// If the factor is greater than 1, the image is upscaled.
+        /// If the factor is less than 1, the image is downscaled.
+        /// If the factor is 1, nothing happens.
         /// </summary>
         /// <param name="factor">The factor</param>
         public void Resize(double factor) {
@@ -231,32 +228,9 @@
             Pixel[,] newPixels = new Pixel[(int) (Height * factor), (int) (Width * factor)];
             
             if (factor > 1) {
-                for (int i = 0; i < Height; i++) {
-                    for (int j = 0; j < Width; j++) {
-                        // to upscale, we just duplicate the pixels
-                        for (int k = 0; k < factor; k++) {
-                            for (int l = 0; l < factor; l++) {
-                                newPixels[(int) (i * factor + k), (int) (j * factor + l)] = Pixels[i, j].Clone();
-                            }
-                        }
-                    }
-                }
+                Upscale_Default(newPixels, factor);
             } else {
-                int factor_inv = (int) (1/factor);
-                // to downscale, each pixel in the new image is the average of factor_inv^2 pixels in the old image
-                for (int i = 0; i < newPixels.GetLength(0); i++) {
-                    for (int j = 0; j < newPixels.GetLength(1); j++) {
-                        int r = 0, g = 0, b = 0;
-                        for (int k = 0; k < factor_inv; k++) {
-                            for (int l = 0; l < factor_inv; l++) {
-                                r += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Red;
-                                g += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Green;
-                                b += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Blue;
-                            }
-                        }
-                        newPixels[i, j] = new Pixel((byte) (b / (factor_inv * factor_inv)), (byte) (g / (factor_inv * factor_inv)), (byte) (r / (factor_inv * factor_inv)));
-                    }
-                }
+                Downscale_Default(newPixels, factor);
             }
             
             Height = newPixels.GetLength(0);
@@ -265,28 +239,82 @@
         }
 
         /// <summary>
+        /// Upscale the image by a factor.
+        /// </summary>
+        /// <param name="newPixels">The new pixels matrix</param>
+        /// <param name="factor">The factor</param>
+        private void Upscale_Default(Pixel[,] newPixels, double factor) {
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    // to upscale, we just duplicate the pixels
+                    for (int k = 0; k < factor; k++) {
+                        for (int l = 0; l < factor; l++) {
+                            newPixels[(int) (i * factor + k), (int) (j * factor + l)] = Pixels[i, j].Clone();
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Downscale the image by a factor.
+        /// </summary>
+        /// <param name="newPixels">The new pixels matrix</param>
+        /// <param name="factor">The factor</param>
+        private void Downscale_Default(Pixel[,] newPixels, double factor) {
+            int factor_inv = (int) (1/factor);
+            // to downscale, each pixel in the new image is the average of factor_inv^2 pixels in the old image
+            for (int i = 0; i < newPixels.GetLength(0); i++) {
+                for (int j = 0; j < newPixels.GetLength(1); j++) {
+                    // we can't just average using pixel operations because of the possibility of overflow
+                    int r = 0, g = 0, b = 0;
+                    for (int k = 0; k < factor_inv; k++) {
+                        for (int l = 0; l < factor_inv; l++) {
+                            r += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Red;
+                            g += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Green;
+                            b += Pixels[(int) (i * factor_inv + k), (int) (j * factor_inv + l)].Blue;
+                        }
+                    }
+                    newPixels[i, j] = new Pixel((byte) (b / (factor_inv * factor_inv)), (byte) (g / (factor_inv * factor_inv)), (byte) (r / (factor_inv * factor_inv)));
+                }
+            }
+        }
+
+        /// <summary>
         /// Crop the image.
         /// </summary>
         /// <param name="x1">The x coordinate of the top left corner</param>
         /// <param name="y1">The y coordinate of the top left corner</param>
-        /// <param name="x2">The x coordinate of the bottom right corner</param>
-        /// <param name="y2">The y coordinate of the bottom right corner</param>
-        public void Crop(int x1, int y1, int x2, int y2) {
-            if (x1 < 0 || x1 >= Width || x2 < 0 || x2 >= Width || y1 < 0 || y1 >= Height || y2 < 0 || y2 >= Height)
-                throw new ArgumentException("Invalid coordinates");
-
-            Pixel[,] newPixels = new Pixel[x2 - x1, y2 - y1];
-            for (int i = y1; i < y2; i++) {
-                for (int j = x1; j < x2; j++) {
-                    newPixels[i - y1, j - x1] = Pixels[i, j];
+        /// <param name="dx">The width of the crop</param>
+        /// <param name="dy">The height of the crop</param>
+        public void Crop(int x, int y, int dx, int dy) {
+            if (x < 0 || y < 0 || x + dx > Width || y + dy > Height) {
+                throw new Exception("Invalid crop");
+            }
+            Pixel[,] newPixels = new Pixel[dy, dx];
+            for (int i = 0; i < dy; i++) {
+                for (int j = 0; j < dx; j++) {
+                    newPixels[i, j] = Pixels[y + i, x + j];
                 }
             }
-            Width = newPixels.GetLength(0);
-            Height = newPixels.GetLength(1);
+            Height = newPixels.GetLength(0);
+            Width = newPixels.GetLength(1);
             Pixels = newPixels;
-            Size = Offset + Width * Height * BytesPerPixel;
         }
-        
+        #endregion
+
+        #region Filters
+        /// <summary>
+        /// Revert all RGB colors of the image.
+        /// </summary>
+        public void Invert() {
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    Pixels[i, j].Invert();
+                }
+            }
+        }
+
         /// <summary>
         /// Convert the image to grayscale.
         /// </summary>
@@ -297,19 +325,33 @@
                 }
             }
         }
-        #endregion
 
-        #region Filters
         /// <summary>
         /// Apply a "border detection" filter to the image (using convolution matrix).
         /// </summary>
-        public void EdgeDetection() {
+        /// <param name="discardImageArea">If true, the borders of the image are discarded.</param>
+        /// <param name="gray">If true, the image is converted to grayscale before applying the filter.</param>
+        public void EdgeDetection(bool discardImageArea = true, bool gray = true) {
+            if (gray) Grayscale();
+
             int[,] matrix = new int[,] {
                 {0, -1, 0},
                 {-1, 4, -1},
                 {0, -1, 0}
             };
             Convolution(matrix);
+
+            // We found the borders of the new pixel matrix useless, so we discard them.
+            if (discardImageArea) {
+                for (int i = 0; i < Height; i++) {
+                    Pixels[i, 0] = new Pixel(0, 0, 0);
+                    Pixels[i, Width - 1] = new Pixel(0, 0, 0);
+                }
+                for (int i = 0; i < Width; i++) {
+                    Pixels[0, i] = new Pixel(0, 0, 0);
+                    Pixels[Height - 1, i] = new Pixel(0, 0, 0);
+                }
+            }
         }
 
         /// <summary>
@@ -407,9 +449,9 @@
                     green /= div;
                     blue /= div;
                     newPixels[i, j] = new Pixel(
-                        Math.Min(Math.Max(blue, 0), 255),
-                        Math.Min(Math.Max(green, 0), 255),
-                        Math.Min(Math.Max(red, 0), 255)
+                        (byte)Math.Min(Math.Max(blue, 0), 255),
+                        (byte)Math.Min(Math.Max(green, 0), 255),
+                        (byte)Math.Min(Math.Max(red, 0), 255)
                     );
                 }
             }
@@ -419,32 +461,24 @@
         #endregion
 
         #region Utils
+        /// <summary>
+        /// Clone the image.
+        /// </summary>
         public MyImage Clone() {
-            Pixel[,] newPixels = new Pixel[Height, Width];
-            for (int i = 0; i < Height; i++) {
-                for (int j = 0; j < Width; j++) {
-                    newPixels[i, j] = Pixels[i, j].Clone();
-                }
-            }
-
-            return new MyImage(this, newPixels);
+            return new MyImage(this);
         }
 
-        /// Shows all properties.
-        /// the matrix of pixels is shown by rows.
+        /// <summary>
+        /// Return a string representation of the image.
+        /// </summary>
         public string Repr() {
             string s = "";
-            s += $"Type: {Type}\n";
-            s += $"Size: {Size}\n";
-            s += $"Offset: {Offset}\n";
             s += $"Width: {Width}\n";
             s += $"Height: {Height}\n";
             s += $"BitsPerPixel: {BitsPerPixel}\n";
             return s;
         }
-
-        #endregion
-        
+        #endregion 
     }
 
     
