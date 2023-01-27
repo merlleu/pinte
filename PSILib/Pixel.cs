@@ -1,12 +1,10 @@
 namespace PSILib {
     public class Pixel {
         #region Properties
+        // The color of the pixel
         public byte Red { get; set; }
         public byte Green { get; set; }
         public byte Blue { get; set; }
-
-        /// <summary>
-        /// Alpha channel (optional) is the opacity of the pixel
 
         // public byte Alpha { get; set; }
         #endregion

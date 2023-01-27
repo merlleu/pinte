@@ -1,13 +1,12 @@
 ﻿namespace PSILib
 {
-    
+    using static Constants;
     public class MyImage
     {
         #region Properties
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public int BitsPerPixel { get; }
-
+        public int BitsPerPixel { get; private set; }
         private Pixel[,] Pixels;
         #endregion
 
@@ -20,13 +19,13 @@
         public MyImage(string path) {
             var bytes = File.ReadAllBytes(path);
             if (bytes.Length < 54) {
-                throw new Exception("File is too small.");
+                throw new ArgumentException("File is too small.");
             }
 
             // headers
             // check if it's a BMP file
-            if (bytes[0] != 66 || bytes[1] != 77) {
-                throw new Exception("Not a BMP file");
+            if (bytes[0] != BMP_MAGIC_0 || bytes[1] != BMP_MAGIC_1) {
+                throw new ArgumentException("Not a BMP file");
             }
 
             int size = Convertir_Endian_To_Int(bytes, 4, 2);
@@ -35,28 +34,40 @@
             // DIB Header
             int dib_header_size = Convertir_Endian_To_Int(bytes, 4, 14);
             if (dib_header_size != 40) {
-                throw new Exception("DIB Header size must be 40.");
+                throw new ArgumentException("DIB Header size must be 40.");
             }
 
             Width = Convertir_Endian_To_Int(bytes, 4, 18);
             Height = Convertir_Endian_To_Int(bytes, 4, 22);
-            
-            if (Width * Height > 100_000_000) {
-                throw new Exception("Image is too big, this maty be a DOS attack.");
+
+            int planes = Convertir_Endian_To_Int(bytes, 2, 26);
+            if (planes != 1) {
+                throw new ArgumentException("Planes must be 1.");
             }
 
             BitsPerPixel = Convertir_Endian_To_Int(bytes, 2, 28);
-
-            // we don't handle less than 1 byte per pixel
+            // for simplicity reasons, we only handle the 24BPP mode.
             if (BitsPerPixel != 24) {
-                throw new Exception("Bits per pixel must be 24.");
+                throw new ArgumentException("Bits per pixel must be 24.");
             }
-            
+
+            int compression = Convertir_Endian_To_Int(bytes, 4, 30);
+            if (compression != BI_RGB && compression != BI_BITFIELDS) {
+                throw new ArgumentException("Compression must be BI_RGB or BI_BITFIELDS.");
+            }
+
             // check file length
             if (offset + BitsPerPixel*Width*Height/8 > bytes.Length) {
-                throw new Exception("File length is not correct");
+                throw new ArgumentException("File length is not correct.");
             }
             Pixels = ParsePixels(bytes, offset);
+        }
+
+        public MyImage(int Width, int Height, int BitsPerPixel, Pixel[,] Pixels) {
+            this.Width = Width;
+            this.Height = Height;
+            this.BitsPerPixel = BitsPerPixel;
+            this.Pixels = Pixels;
         }
 
         /// <summary>

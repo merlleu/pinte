@@ -6,6 +6,7 @@ namespace ConsoleApp
     {
         public static void Main(string[] args)
         {
+            #region basic tests
             PSILib.MyImage img = new PSILib.MyImage("../resources/WL1.BMP");
             // img.Invert();
             img.Rotate(); 
@@ -61,21 +62,16 @@ namespace ConsoleApp
             var img3 = new PSILib.MyImage("../resources/lac.BMP");
             img3.EdgeDetection();
             img3.Save("../resources/lacEdge.BMP");
+            #endregion
 
-            // var gray = img.Clone();
-            // gray.Grayscale();
-            // gray.Save("../resources/gray.BMP");
+            #region fractales
 
-            // var rot = img.Clone();
-            // File.WriteAllText("../resources/rot.txt", rot.Repr());
-            // rot.Crop(0, 0, 5, 5);
-            // File.WriteAllText("../resources/rot2.txt", rot.Repr());
-            // rot.Save("../resources/rot.BMP");
+            var fractale = new PSILib.FractaleBuilder()
+                .SetSize(1000, 1000)
+                .Build();
+            fractale.Save("../resources/fractale_1.BMP");
 
-            // read bitmap ../resources/rot.BMP
-            // Bitmap bmp = new Bitmap("../resources/OUT2.BMP");
-            // bmp.RotateFlip(RotateFlipType.Rotate90FlipNone);
-            // bmp.Save("../resources/OUT3.BMP");
+            #endregion
         }
     }
 }
