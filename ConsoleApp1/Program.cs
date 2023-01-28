@@ -48,7 +48,7 @@ namespace ConsoleApp
             img2.Save("../out/GrayCropRotateResizeRotate.BMP");
             // Console.WriteLine(img2);
             img2.RemoveBorder();
-            img2.Save("../out/EdgeDetectionGrayCropRotateResizeRotateCrop.BMP");
+            img2.Save("../out/GrayCropRotateResizeRotateCrop.BMP");
 
             img2 = img.Clone();
             img2.Sharpen();
