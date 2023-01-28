@@ -3,8 +3,8 @@ namespace PSILib;
 public class FractaleBuilder {
     #region Properties
     // The size of the fractale
-    public int Width { get; set; }
-    public int Height { get; set; }
+    public uint Width { get; set; }
+    public uint Height { get; set; }
 
     #endregion
 
@@ -13,19 +13,14 @@ public class FractaleBuilder {
     /// <summary>
     /// Create a new FractaleBuilder.
     /// </summary>
-    public FractaleBuilder() {}
-
-    /// <summary>
-    /// Set the size of the fractale.
-    /// </summary>
     /// <param name="width">The width of the fractale</param>
     /// <param name="height">The height of the fractale</param>
-    public FractaleBuilder SetSize(int width, int height) {
+    /// <returns>The fractale builder</returns>
+    public FractaleBuilder(uint width, uint height) {
         Width = width;
         Height = height;
-        return this;
     }
-
+    
     /// <summary>
     /// Check the size of the fractale and create the pixel matrix.
     /// </summary>

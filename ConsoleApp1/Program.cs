@@ -82,13 +82,11 @@ namespace ConsoleApp
 
             #region fractales
 
-            var fractale = new PSILib.FractaleBuilder()
-                .SetSize(1000, 1000)
+            var fractale = new PSILib.FractaleBuilder(1000, 1000)
                 .Basic();
             fractale.Save("../out/fractale_1.BMP");
 
-            fractale = new PSILib.FractaleBuilder()
-                .SetSize(1000, 1000)
+            fractale = new PSILib.FractaleBuilder(1000, 1000)
                 .Basic(fill: false);
             fractale.Save("../out/fractale_2.BMP");
 

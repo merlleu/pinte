@@ -4,9 +4,9 @@
     public class MyImage
     {
         #region Properties
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-        public int BitsPerPixel { get; private set; }
+        public uint Width { get; private set; }
+        public uint Height { get; private set; }
+        public uint BitsPerPixel { get; private set; }
         private Pixel[,] Pixels;
         #endregion
 
@@ -28,11 +28,11 @@
                 throw new ArgumentException("Not a BMP file");
             }
 
-            int size = Convertir_Endian_To_Int(bytes, 4, 2);
-            int offset = Convertir_Endian_To_Int(bytes, 4, 10);
+            uint size = Convertir_Endian_To_Int(bytes, 4, 2);
+            uint offset = Convertir_Endian_To_Int(bytes, 4, 10);
 
             // DIB Header
-            int dib_header_size = Convertir_Endian_To_Int(bytes, 4, 14);
+            uint dib_header_size = Convertir_Endian_To_Int(bytes, 4, 14);
             if (dib_header_size != 40) {
                 throw new ArgumentException("DIB Header size must be 40.");
             }
@@ -40,7 +40,7 @@
             Width = Convertir_Endian_To_Int(bytes, 4, 18);
             Height = Convertir_Endian_To_Int(bytes, 4, 22);
 
-            int planes = Convertir_Endian_To_Int(bytes, 2, 26);
+            uint planes = Convertir_Endian_To_Int(bytes, 2, 26);
             if (planes != 1) {
                 throw new ArgumentException("Planes must be 1.");
             }
@@ -51,19 +51,23 @@
                 throw new ArgumentException("Bits per pixel must be 24.");
             }
 
-            int compression = Convertir_Endian_To_Int(bytes, 4, 30);
+            uint compression = Convertir_Endian_To_Int(bytes, 4, 30);
             if (compression != BI_RGB && compression != BI_BITFIELDS) {
                 throw new ArgumentException("Compression must be BI_RGB or BI_BITFIELDS.");
             }
 
             // check file length
+            if (Width*Height > 1_000_000_000) {
+                throw new ArgumentException("Image is too big.");
+            }
             if (offset + BitsPerPixel*Width*Height/8 > bytes.Length) {
                 throw new ArgumentException("File length is not correct.");
             }
-            Pixels = ParsePixels(bytes, offset);
+            Pixels = new Pixel[Height, Width];
+            ParsePixels(bytes, offset);
         }
 
-        public MyImage(int Width, int Height, int BitsPerPixel, Pixel[,] Pixels) {
+        public MyImage(uint Width, uint Height, uint BitsPerPixel, Pixel[,] Pixels) {
             this.Width = Width;
             this.Height = Height;
             this.BitsPerPixel = BitsPerPixel;
@@ -92,15 +96,13 @@
         /// </summary>
         /// <param name="bytes">The byte array to deserialize</param>
         /// <returns>A 2D array of pixels</returns>
-        private Pixel[,] ParsePixels(byte[] bytes, int offset) {
-            int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
-            int size = offset + RowSize * Height;
-            var px = new Pixel[Height, Width];
+        private void ParsePixels(byte[] bytes, uint offset) {
+            uint RowSize = (uint) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
 
-            for (int i = 0; i < Height; i++) {
-                int pos = offset + RowSize * i;
+            for (uint i = 0; i < Height; i++) {
+                uint pos = offset + RowSize * i;
                 for (int j = 0; j < Width; j++) {
-                    px[i, j] = new Pixel(
+                    Pixels[i, j] = new Pixel(
                         (byte)Convertir_Endian_To_Int(bytes, 1, pos),
                         (byte)Convertir_Endian_To_Int(bytes, 1, pos + 1),
                         (byte)Convertir_Endian_To_Int(bytes, 1, pos + 2)
@@ -108,7 +110,6 @@
                     pos += 3;
                 }
             }
-            return px;
         }
 
         /// <summary>
@@ -118,11 +119,11 @@
         /// <param name="bits">The size of the integer in bytes</param>
         /// <param name="pos">The position in the array</param>
         /// <returns>The little endian int</returns>
-        private int Convertir_Endian_To_Int(byte[] tab, int bytes, int pos) {
+        private uint Convertir_Endian_To_Int(byte[] tab, uint bytes, uint pos) {
             // convert n bits from tab[pos] to a little endian int
-            int res = 0;
+            uint res = 0;
             for (int i = 0; i < bytes; i++) {
-                res += tab[pos + i] << (i * 8);
+                res += (uint) tab[pos + i] << (i * 8);
             }
             return res;
         }
@@ -135,7 +136,7 @@
         /// <param name="n">The number to convert</param>
         /// <param name="bits">The size of the integer in bits</param>
         /// <returns>The little endian byte array</returns>
-        private byte[] Convertir_Int_To_Endian(int n, int bytes) {
+        private byte[] Convertir_Int_To_Endian(uint n, uint bytes) {
             // convert n to a little endian byte array of size bits
             byte[] res = new byte[bytes];
             for (int i = 0; i < bytes; i++) {
@@ -152,7 +153,7 @@
         /// <param name="bits">The size of the integer in bits</param>
         /// <param name="pos">The position in the array</param>
         /// <param name="tab">The array</param>
-        private void Convertir_Int_To_Endian(int val, byte[] tab, int bytes, int pos) {
+        private void Convertir_Int_To_Endian(uint val, byte[] tab, uint bytes, uint pos) {
             // convert n bits from tab[pos] to a little endian int
             for (int i = 0; i < bytes; i++) {
                 tab[pos + i] = (byte) (val >> (i * 8));
@@ -164,10 +165,10 @@
         /// </summary>
         /// <param name="path">The path to the file</param>
         public void Save(string path) {
-            int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
-            int dib_header_size = 40;
-            int offset = 14 + dib_header_size;
-            int size = offset + RowSize * Height;
+            uint RowSize = (uint) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
+            uint dib_header_size = 40;
+            uint offset = 14 + dib_header_size;
+            uint size = offset + RowSize * Height;
 
             var bytes = new byte[size];
             // headers
@@ -181,9 +182,9 @@
             Convertir_Int_To_Endian(1, bytes, 2, 26);
             Convertir_Int_To_Endian(BitsPerPixel, bytes, 2, 28);
 
-            int pos = offset;
+            uint pos = offset;
 
-            for (int i = 0; i < Height; i++) {
+            for (uint i = 0; i < Height; i++) {
                 pos = i*RowSize + offset;
                 for (int j = 0; j < Width; j++) {
                     Convertir_Int_To_Endian(Pixels[i, j].Blue, bytes, 1, pos);
@@ -196,6 +197,73 @@
             }
 
             File.WriteAllBytes(path, bytes);
+        }
+
+        #endregion
+
+        #region Compression
+        
+
+        /// <summary>
+        /// Deserialize a BMP grid from a byte array in BI_BITFIELDS compression mode.
+        /// </summary>
+        /// <param name="bytes">The byte array to deserialize</param>
+        /// <returns>A 2D array of pixels</returns>
+        private void ParsePixelsBitFieldCompression(byte[] bytes, int offset) {
+            uint red_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 54);
+            uint green_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 58);
+            uint blue_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 62);
+
+            int red_shift = GetShiftCount(red_mask);
+            int green_shift = GetShiftCount(green_mask);
+            int blue_shift = GetShiftCount(blue_mask);
+
+            int red_bits = GetBitCount(red_mask);
+            int green_bits = GetBitCount(green_mask);
+            int blue_bits = GetBitCount(blue_mask);
+
+            int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
+            
+            for (int i = 0; i < Height; i++) {
+                int pos = i*RowSize + offset;
+                for (int j = 0; j < Width; j++) {
+                    uint pixel = (uint)Convertir_Endian_To_Int(bytes, 4, (uint)pos);
+                    pos += 4;
+                    Pixels[i, j] = new Pixel(
+                        (byte)((pixel & red_mask) >> red_shift),
+                        (byte)((pixel & green_mask) >> green_shift),
+                        (byte)((pixel & blue_mask) >> blue_shift)
+                    );
+                }
+            }
+        } 
+
+        /// <summary>
+        /// Get the number of bits in a mask.
+        /// </summary>
+        /// <param name="mask">The mask to analyze</param>
+        /// <returns>The number of bits</returns>
+        private int GetBitCount(uint mask) {
+            int count = 0;
+            while (mask != 0) {
+                count += (int)(mask & 1);
+                mask >>= 1;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Get the shift count of a mask.
+        /// </summary>
+        /// <param name="mask">The mask to analyze</param>
+        /// <returns>The shift count</returns>
+        private int GetShiftCount(uint mask) {
+            int count = 0;
+            while ((mask & 1) == 0) {
+                count++;
+                mask >>= 1;
+            }
+            return count;
         }
 
         #endregion
@@ -214,15 +282,9 @@
             if (angle % 90 != 0 && resize_factor != 1) {
                 Resize(resize_factor);
             }
-            int newWidth, newHeight;
-            if (angle % 90 == 0) {
-                newWidth = Math.Abs(Width * (int)Math.Cos(angle * Math.PI / 180)) + Math.Abs(Height * (int)Math.Sin(angle * Math.PI / 180));
-                newHeight = Math.Abs(Width * (int)Math.Sin(angle * Math.PI / 180)) + Math.Abs(Height * (int)Math.Cos(angle * Math.PI / 180));
-            } else {
-                double angleRadians = angle * Math.PI / 180;
-                newWidth = (int)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
-                newHeight = (int)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
-            }
+            double angleRadians = angle * Math.PI / 180;
+            uint newWidth = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
+            uint newHeight = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
 
             Pixel[,] newPixels = new Pixel[newHeight, newWidth];
             for (int row = 0; row < newHeight; row++) {
@@ -232,13 +294,13 @@
             }
 
             double x, y;
-            int x_int, y_int;
+            uint x_int, y_int;
             for (int row = 0; row < Height; row++) {
                 for (int col = 0; col < Width; col++) {
                     x = (col - Width / 2) * Math.Cos(angle * Math.PI / 180) - (row - Height / 2) * Math.Sin(angle * Math.PI / 180) + newWidth / 2;
                     y = (col - Width / 2) * Math.Sin(angle * Math.PI / 180) + (row - Height / 2) * Math.Cos(angle * Math.PI / 180) + newHeight / 2;
-                    x_int = (int)Math.Round(x);
-                    y_int = (int)Math.Round(y);
+                    x_int = (uint)Math.Round(x);
+                    y_int = (uint)Math.Round(y);
                     newPixels[y_int, x_int] = Pixels[row, col];
 
                     if (x_int > 0 && x_int < newWidth - 1 && y_int > 0 && y_int < newHeight - 1) {
@@ -265,9 +327,9 @@
         /// </summary>
         /// <param name="size">The size of the border</param>
         /// <param name="color">The color of the border</param>
-        public void AddBorder(int size, Pixel color) {
-            int newWidth = Width + 2 * size;
-            int newHeight = Height + 2 * size;
+        public void AddBorder(uint size, Pixel color) {
+            uint newWidth = Width + 2 * size;
+            uint newHeight = Height + 2 * size;
             Pixel[,] newPixels = new Pixel[newHeight, newWidth];
             for (int i = 0; i < newHeight; i++) {
                 for (int j = 0; j < newWidth; j++) {
@@ -278,8 +340,8 @@
                     }
                 }
             }
-            Height = newPixels.GetLength(0);
-            Width = newPixels.GetLength(1);
+            Height = (uint)newPixels.GetLength(0);
+            Width = (uint)newPixels.GetLength(1);
             Pixels = newPixels;
         }
 
@@ -289,14 +351,21 @@
         /// </summary>
         /// <param name="color">The color of the border</param>
         /// <returns>The border length</returns>
-        public int GetBorderLength(Pixel color) {
+        public uint GetBorderLength(Pixel color) {
             // We iterate over each pixel of the n-th line/row parallel to a border.
             // If the pixel is not the color of the border, we stop the iteration.
-
-            for (int length = 0;; length++) {
+    
+            for (uint length = 0;; length++) {
                 // Top/Bottom border
                 for (int i = 0; i < Width; i++) {
                     if (!Pixels[length, i].Equals(color) || !Pixels[Height - length - 1, i].Equals(color)) {
+                        return length;
+                    }
+                }
+
+                // Left/Right border
+                for (int i = 0; i < Height; i++) {
+                    if (!Pixels[i, length].Equals(color) || !Pixels[i, Width - length - 1].Equals(color)) {
                         return length;
                     }
                 }
@@ -308,18 +377,20 @@
         /// </summary>
         /// <param name="color">The color of the border</param>
         /// <param name="max_length">The maximum length of the border to remove</param>
-        public int RemoveBorder(Pixel? color = null, int max_length = -1) {
+        public uint RemoveBorder(Pixel? color = null, int max_length = -1) {
             if (color == null) {
                 color = new Pixel();
             }
-            int length = GetBorderLength(color);
-            if (max_length != -1) {
-                length = Math.Min(length, max_length);
+            uint length = GetBorderLength(color);
+            if (max_length > 0) {
+                length = (uint)Math.Min(length, max_length);
             }
 
-            int newWidth = Width - 2 * length;
-            int newHeight = Height - 2 * length;
-            Crop(length, length, newWidth, newHeight);
+            if (length != 0) {
+                uint newWidth = Width - 2 * length;
+                uint newHeight = Height - 2 * length;
+                Crop(length, length, newWidth, newHeight);
+            }
             return length;
         }
 
@@ -341,8 +412,8 @@
                 Downscale_Default(newPixels, factor);
             }
             
-            Height = newPixels.GetLength(0);
-            Width = newPixels.GetLength(1);
+            Height = (uint)newPixels.GetLength(0);
+            Width = (uint)newPixels.GetLength(1);
             Pixels = newPixels;
         }
 
@@ -390,7 +461,7 @@
         /// <param name="y1">The y coordinate of the bottom left corner</param>
         /// <param name="dx">The width of the crop</param>
         /// <param name="dy">The height of the crop</param>
-        public void Crop(int x, int y, int dx, int dy) {
+        public void Crop(uint x, uint y, uint dx, uint dy) {
             if (x < 0 || y < 0) throw new ArgumentException("Invalid crop");
             CheckDimensions(x+dx, y+dy);
 
@@ -400,8 +471,8 @@
                     newPixels[i, j] = Pixels[y + i, x + j];
                 }
             }
-            Height = newPixels.GetLength(0);
-            Width = newPixels.GetLength(1);
+            Height = (uint)newPixels.GetLength(0);
+            Width = (uint)newPixels.GetLength(1);
             Pixels = newPixels;
         }
         #endregion
@@ -571,7 +642,7 @@
         /// <param name="img">The image to hide</param>
         /// <param name="x">The x position</param>
         /// <param name="y">The y position</param>
-        public void HideImage(MyImage img, int x, int y, int bits = 4) {
+        public void HideImage(MyImage img, uint x, uint y, int bits = 4) {
             CheckDimensions(x+img.Width, y+img.Height);
 
             for (int i = 0; i < img.Height; i++) {
@@ -588,7 +659,7 @@
         /// <param name="y">The y position</param>
         /// <param name="dx">The width of the image to extract</param>
         /// <param name="dy">The height of the image to extract</param>
-        public void ExtractImage(int x, int y, int dx, int dy, int bits = 4) {
+        public void ExtractImage(uint x, uint y, uint dx, uint dy, int bits = 4) {
             CheckDimensions(x+dx, y+dy);
 
             for (int i = 0; i < dy; i++) {
@@ -618,7 +689,7 @@
         /// </summary>
         /// <param name="width">The width to check</param>
         /// <param name="height">The height to check</param>
-        public void CheckDimensions(int width, int height) {
+        public void CheckDimensions(uint width, uint height) {
             if (Width < width || Height < height)
                 throw new Exception($"{this} is too small, required: (width: {width}, height: {height}).");
         }
