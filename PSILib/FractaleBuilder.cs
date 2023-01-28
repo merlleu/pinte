@@ -27,15 +27,22 @@ public class FractaleBuilder {
     }
 
     /// <summary>
-    /// Build the fractale.
+    /// Check the size of the fractale and create the pixel matrix.
     /// </summary>
-    /// <returns>The fractale as a MyImage</returns>
-    public MyImage Build() {
+    /// <returns>The pixel matrix</returns>
+    private Pixel[,] Init() {
         if (Width * Height > 1_000_000_000) {
             throw new System.Exception("Image too big");
         }
         Pixel[,] pixelMatrix = new Pixel[Width, Height];
-        GenerateFractale(pixelMatrix);
+        return pixelMatrix;
+    }
+
+    /// <summary>
+    /// Finish the fractale generation.
+    /// </summary>
+    /// <returns>The generated image</returns>
+    private MyImage Finish(Pixel[,] pixelMatrix) {
         MyImage image = new MyImage(Width, Height, 24, pixelMatrix);
         return image;
     }
@@ -47,10 +54,10 @@ public class FractaleBuilder {
     /// Generate a fractale using the Mandelbrot set.
     /// </summary>
     /// <param name="pixelMatrix">The matrix of pixels to fill</param>
-    private void GenerateFractale(Pixel[,] pixelMatrix, int max_depth = 1000, double zoom = 1, double moveX = -0.5, double moveY = 0) {
+    public MyImage Basic(bool fill = true, int max_depth = 1000, double zoom = 1, double moveX = -0.5, double moveY = 0) {
+        var pixelMatrix = Init();
         double x0, y0, x, y, xtemp;
         int depth = 0;
-        
 
         for (int i = 0; i < Width; i++) {
             for (int j = 0; j < Height; j++) {
@@ -68,10 +75,16 @@ public class FractaleBuilder {
                 if (depth == max_depth) {
                     pixelMatrix[i, j] = new Pixel(0, 0, 0);
                 } else {
-                    pixelMatrix[i, j] = new Pixel(255, 255, 255);
+                    if (fill) {
+                        pixelMatrix[i, j] = new Pixel(255, 255, 255);
+                    } else {
+                        pixelMatrix[i, j] = new Pixel((byte)(depth % 256), (byte)(depth % 256), (byte)(depth % 256));
+                    }
                 }
             }
         }
+
+        return Finish(pixelMatrix);
     }
     #endregion
 }

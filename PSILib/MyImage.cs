@@ -169,8 +169,6 @@
             int offset = 14 + dib_header_size;
             int size = offset + RowSize * Height;
 
-            // Console.WriteLine("RowSize: " + RowSize);
-
             var bytes = new byte[size];
             // headers
             bytes[0] = 66;
@@ -204,13 +202,80 @@
 
         #region Operations
         /// <summary>
-        /// Rotate the image by 90 degrees.
+        /// Rotate the image by a given angle.
+        /// If the angle is not a multiple of 90, the image will be enlarged with black pixels.
+        /// Note that artifacts may appear with these angles,
+        /// to reduce them, upscale the image before rotating, then downscale it again.
+        /// Also, you can use the RemoveBorder method to resize the image after rotating it multiple times to remove the black pixels.
         /// </summary>
-        private void Rotate() {
-            Pixel[,] newPixels = new Pixel[Width, Height];
-            for (int i = 0; i < Height; i++) {
-                for (int j = 0; j < Width; j++) {
-                    newPixels[j, Height - i - 1] = Pixels[i, j];
+        /// <param name="angle">The angle in degrees</param>
+        /// <param name="resize_factor">The factor to resize the image by</param>
+        public void Rotate(int angle, double resize_factor = 1) {
+            if (angle % 90 != 0 && resize_factor != 1) {
+                Resize(resize_factor);
+            }
+            int newWidth, newHeight;
+            if (angle % 90 == 0) {
+                newWidth = Math.Abs(Width * (int)Math.Cos(angle * Math.PI / 180)) + Math.Abs(Height * (int)Math.Sin(angle * Math.PI / 180));
+                newHeight = Math.Abs(Width * (int)Math.Sin(angle * Math.PI / 180)) + Math.Abs(Height * (int)Math.Cos(angle * Math.PI / 180));
+            } else {
+                double angleRadians = angle * Math.PI / 180;
+                newWidth = (int)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
+                newHeight = (int)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
+            }
+
+            Pixel[,] newPixels = new Pixel[newHeight, newWidth];
+            for (int row = 0; row < newHeight; row++) {
+                for (int col = 0; col < newWidth; col++) {
+                    newPixels[row, col] = new Pixel(0, 0, 0);
+                }
+            }
+
+            double x, y;
+            int x_int, y_int;
+            for (int row = 0; row < Height; row++) {
+                for (int col = 0; col < Width; col++) {
+                    x = (col - Width / 2) * Math.Cos(angle * Math.PI / 180) - (row - Height / 2) * Math.Sin(angle * Math.PI / 180) + newWidth / 2;
+                    y = (col - Width / 2) * Math.Sin(angle * Math.PI / 180) + (row - Height / 2) * Math.Cos(angle * Math.PI / 180) + newHeight / 2;
+                    x_int = (int)Math.Round(x);
+                    y_int = (int)Math.Round(y);
+                    newPixels[y_int, x_int] = Pixels[row, col];
+
+                    if (x_int > 0 && x_int < newWidth - 1 && y_int > 0 && y_int < newHeight - 1) {
+                        newPixels[y_int, x_int + 1].UpdateIfNotEmpty(Pixels[row, col]);
+                        newPixels[y_int, x_int - 1].UpdateIfNotEmpty(Pixels[row, col]);
+                        newPixels[y_int + 1, x_int].UpdateIfNotEmpty(Pixels[row, col]);
+                        newPixels[y_int - 1, x_int].UpdateIfNotEmpty(Pixels[row, col]);
+                    }
+                }
+            }
+
+            Width = newWidth;
+            Height = newHeight;
+            Pixels = newPixels;
+
+            if (angle % 90 != 0 && resize_factor != 1) {
+                Resize(1/resize_factor);
+            }
+        }
+
+
+        /// <summary>
+        /// Add a border to the image
+        /// </summary>
+        /// <param name="size">The size of the border</param>
+        /// <param name="color">The color of the border</param>
+        public void AddBorder(int size, Pixel color) {
+            int newWidth = Width + 2 * size;
+            int newHeight = Height + 2 * size;
+            Pixel[,] newPixels = new Pixel[newHeight, newWidth];
+            for (int i = 0; i < newHeight; i++) {
+                for (int j = 0; j < newWidth; j++) {
+                    if (i < size || i >= Height + size || j < size || j >= Width + size) {
+                        newPixels[i, j] = color;
+                    } else {
+                        newPixels[i, j] = Pixels[i - size, j - size];
+                    }
                 }
             }
             Height = newPixels.GetLength(0);
@@ -218,12 +283,44 @@
             Pixels = newPixels;
         }
 
-        public void Rotate(int n = 1) {
-            if (n < 0) n = 2 - n;
-            n %= 4;
-            for (int i = 0; i < n; i++) {
-                Rotate();
+        
+        /// <summary>
+        /// Get the border length of the image for a given color.
+        /// </summary>
+        /// <param name="color">The color of the border</param>
+        /// <returns>The border length</returns>
+        public int GetBorderLength(Pixel color) {
+            // We iterate over each pixel of the n-th line/row parallel to a border.
+            // If the pixel is not the color of the border, we stop the iteration.
+
+            for (int length = 0;; length++) {
+                // Top/Bottom border
+                for (int i = 0; i < Width; i++) {
+                    if (!Pixels[length, i].Equals(color) || !Pixels[Height - length - 1, i].Equals(color)) {
+                        return length;
+                    }
+                }
             }
+        }
+
+        /// <summary>
+        /// Remove the border of the image.
+        /// </summary>
+        /// <param name="color">The color of the border</param>
+        /// <param name="max_length">The maximum length of the border to remove</param>
+        public int RemoveBorder(Pixel? color = null, int max_length = -1) {
+            if (color == null) {
+                color = new Pixel();
+            }
+            int length = GetBorderLength(color);
+            if (max_length != -1) {
+                length = Math.Min(length, max_length);
+            }
+
+            int newWidth = Width - 2 * length;
+            int newHeight = Height - 2 * length;
+            Crop(length, length, newWidth, newHeight);
+            return length;
         }
 
         /// <summary>
@@ -255,14 +352,9 @@
         /// <param name="newPixels">The new pixels matrix</param>
         /// <param name="factor">The factor</param>
         private void Upscale_Default(Pixel[,] newPixels, double factor) {
-            for (int i = 0; i < Height; i++) {
-                for (int j = 0; j < Width; j++) {
-                    // to upscale, we just duplicate the pixels
-                    for (int k = 0; k < factor; k++) {
-                        for (int l = 0; l < factor; l++) {
-                            newPixels[(int) (i * factor + k), (int) (j * factor + l)] = Pixels[i, j].Clone();
-                        }
-                    }
+            for (int i = 0; i < newPixels.GetLength(0); i++) {
+                for (int j = 0; j < newPixels.GetLength(1); j++) {
+                    newPixels[i, j] = Pixels[(int) (i/factor), (int) (j/factor)];
                 }
             }
         }
@@ -294,14 +386,14 @@
         /// <summary>
         /// Crop the image.
         /// </summary>
-        /// <param name="x1">The x coordinate of the top left corner</param>
-        /// <param name="y1">The y coordinate of the top left corner</param>
+        /// <param name="x1">The x coordinate of the bottom left corner</param>
+        /// <param name="y1">The y coordinate of the bottom left corner</param>
         /// <param name="dx">The width of the crop</param>
         /// <param name="dy">The height of the crop</param>
         public void Crop(int x, int y, int dx, int dy) {
-            if (x < 0 || y < 0 || x + dx > Width || y + dy > Height) {
-                throw new Exception("Invalid crop");
-            }
+            if (x < 0 || y < 0) throw new ArgumentException("Invalid crop");
+            CheckDimensions(x+dx, y+dy);
+
             Pixel[,] newPixels = new Pixel[dy, dx];
             for (int i = 0; i < dy; i++) {
                 for (int j = 0; j < dx; j++) {
@@ -471,6 +563,41 @@
 
         #endregion
 
+        #region Steganography
+        /// <summary>
+        /// Hide the image `img` in the current image, at the position (x, y).
+        /// This stores the N 
+        /// </summary>
+        /// <param name="img">The image to hide</param>
+        /// <param name="x">The x position</param>
+        /// <param name="y">The y position</param>
+        public void HideImage(MyImage img, int x, int y, int bits = 4) {
+            CheckDimensions(x+img.Width, y+img.Height);
+
+            for (int i = 0; i < img.Height; i++) {
+                for (int j = 0; j < img.Width; j++) {
+                    Pixels[i + y, j + x].InsertLSB(img.Pixels[i, j], bits );
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extract an image of size (dx,dy) from the current image, at the position (x, y).
+        /// </summary>
+        /// <param name="x">The x position</param>
+        /// <param name="y">The y position</param>
+        /// <param name="dx">The width of the image to extract</param>
+        /// <param name="dy">The height of the image to extract</param>
+        public void ExtractImage(int x, int y, int dx, int dy, int bits = 4) {
+            CheckDimensions(x+dx, y+dy);
+
+            for (int i = 0; i < dy; i++) {
+                for (int j = 0; j < dx; j++) {
+                    Pixels[i + y, j + x].ExtractLSB(bits);
+                }
+            }
+        }
+        #endregion
         #region Utils
         /// <summary>
         /// Clone the image.
@@ -482,12 +609,18 @@
         /// <summary>
         /// Return a string representation of the image.
         /// </summary>
-        public string Repr() {
-            string s = "";
-            s += $"Width: {Width}\n";
-            s += $"Height: {Height}\n";
-            s += $"BitsPerPixel: {BitsPerPixel}\n";
-            return s;
+        public override string ToString() {
+            return $"MyImage(Width: {Width}, Height: {Height}, BitsPerPixel: {BitsPerPixel})";
+        }
+
+        /// <summary>
+        /// Checks wether the image dimensions are larger or equal to the given dimensions.
+        /// </summary>
+        /// <param name="width">The width to check</param>
+        /// <param name="height">The height to check</param>
+        public void CheckDimensions(int width, int height) {
+            if (Width < width || Height < height)
+                throw new Exception($"{this} is too small, required: (width: {width}, height: {height}).");
         }
         #endregion 
     }
