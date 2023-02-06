@@ -283,12 +283,12 @@
                 Resize(resize_factor);
             }
             double angleRadians = angle * Math.PI / 180;
-            uint newWidth = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
-            uint newHeight = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
+            uint nw = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
+            uint nh = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
 
-            Pixel[,] newPixels = new Pixel[newHeight, newWidth];
-            for (int row = 0; row < newHeight; row++) {
-                for (int col = 0; col < newWidth; col++) {
+            Pixel[,] newPixels = new Pixel[nh, nw];
+            for (int row = 0; row < nh; row++) {
+                for (int col = 0; col < nw; col++) {
                     newPixels[row, col] = new Pixel(0, 0, 0);
                 }
             }
@@ -297,13 +297,13 @@
             uint x_int, y_int;
             for (int row = 0; row < Height; row++) {
                 for (int col = 0; col < Width; col++) {
-                    x = (col - Width / 2) * Math.Cos(angle * Math.PI / 180) - (row - Height / 2) * Math.Sin(angle * Math.PI / 180) + newWidth / 2;
-                    y = (col - Width / 2) * Math.Sin(angle * Math.PI / 180) + (row - Height / 2) * Math.Cos(angle * Math.PI / 180) + newHeight / 2;
+                    x = (col - Width / 2) * Math.Cos(angle * Math.PI / 180) - (row - Height / 2) * Math.Sin(angle * Math.PI / 180) + nw / 2;
+                    y = (col - Width / 2) * Math.Sin(angle * Math.PI / 180) + (row - Height / 2) * Math.Cos(angle * Math.PI / 180) + nh / 2;
                     x_int = (uint)Math.Round(x);
                     y_int = (uint)Math.Round(y);
                     newPixels[y_int, x_int] = Pixels[row, col];
 
-                    if (x_int > 0 && x_int < newWidth - 1 && y_int > 0 && y_int < newHeight - 1) {
+                    if (x_int > 0 && x_int < nw - 1 && y_int > 0 && y_int < nh - 1) {
                         newPixels[y_int, x_int + 1].UpdateIfNotEmpty(Pixels[row, col]);
                         newPixels[y_int, x_int - 1].UpdateIfNotEmpty(Pixels[row, col]);
                         newPixels[y_int + 1, x_int].UpdateIfNotEmpty(Pixels[row, col]);
@@ -312,8 +312,8 @@
                 }
             }
 
-            Width = newWidth;
-            Height = newHeight;
+            Width = nw;
+            Height = nh;
             Pixels = newPixels;
 
             if (angle % 90 != 0 && resize_factor != 1) {
@@ -328,11 +328,11 @@
         /// <param name="size">The size of the border</param>
         /// <param name="color">The color of the border</param>
         public void AddBorder(uint size, Pixel color) {
-            uint newWidth = Width + 2 * size;
-            uint newHeight = Height + 2 * size;
-            Pixel[,] newPixels = new Pixel[newHeight, newWidth];
-            for (int i = 0; i < newHeight; i++) {
-                for (int j = 0; j < newWidth; j++) {
+            uint nw = Width + 2 * size;
+            uint nh = Height + 2 * size;
+            Pixel[,] newPixels = new Pixel[nh, nw];
+            for (int i = 0; i < nh; i++) {
+                for (int j = 0; j < nw; j++) {
                     if (i < size || i >= Height + size || j < size || j >= Width + size) {
                         newPixels[i, j] = color;
                     } else {
@@ -387,9 +387,9 @@
             }
 
             if (length != 0) {
-                uint newWidth = Width - 2 * length;
-                uint newHeight = Height - 2 * length;
-                Crop(length, length, newWidth, newHeight);
+                uint nw = Width - 2 * length;
+                uint nh = Height - 2 * length;
+                Crop(length, length, nw, nh);
             }
             return length;
         }
