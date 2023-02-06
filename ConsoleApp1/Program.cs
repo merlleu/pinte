@@ -7,6 +7,10 @@ namespace ConsoleApp
         public static void Main(string[] args)
         {
             #region basic tests
+            # we just create the generated folder if it doesn't exist
+            if (!System.IO.Directory.Exists("../out"))
+                System.IO.Directory.CreateDirectory("../out");
+            
             var img = new PSILib.MyImage("../resources/WL1.BMP");
             
             var img2 = img.Clone();
