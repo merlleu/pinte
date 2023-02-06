@@ -4,6 +4,8 @@ namespace PSILib {
         public static int BMP_MAGIC_1 = 77;
 
         public static int BI_RGB = 0;
+        public static int BI_RLE8 = 1;
+        public static int BI_RLE4 = 2;
         public static int BI_BITFIELDS = 3;
     }
 }
