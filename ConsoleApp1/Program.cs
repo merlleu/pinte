@@ -7,7 +7,7 @@ namespace ConsoleApp
         public static void Main(string[] args)
         {
             #region basic tests
-            # we just create the generated folder if it doesn't exist
+            // we just create the generated folder if it doesn't exist
             if (!System.IO.Directory.Exists("../out"))
                 System.IO.Directory.CreateDirectory("../out");
             
@@ -38,6 +38,10 @@ namespace ConsoleApp
             img2.EdgeDetection();
             img2.Save("../out/EdgeDetectionGray.BMP");
 
+            img2 = img.Clone();
+            img2.Rotate(90);
+            img2.Save("../out/Rotate90.BMP");
+            
             img2 = img.Clone();
             img2.Rotate(27, resize_factor: 1);
             img2.EdgeDetection();

@@ -117,7 +117,7 @@ namespace PSILib {
         /// Update the pixel if it is empty.
         /// </summary>
         /// <param name="pixel">The pixel to use</param>
-        public void UpdateIfNotEmpty(Pixel pixel)
+        public void UpdateIfEmpty(Pixel pixel)
         {
             if (IsEmpty())
             {

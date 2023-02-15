@@ -282,9 +282,9 @@
             if (angle % 90 != 0 && resize_factor != 1) {
                 Resize(resize_factor);
             }
-            double angleRadians = angle * Math.PI / 180;
-            uint nw = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleRadians)) + Math.Abs(Height * Math.Sin(angleRadians)));
-            uint nh = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleRadians)) + Math.Abs(Height * Math.Cos(angleRadians)));
+            double angleR = angle * Math.PI / 180;
+            uint nw = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleR)) + Math.Abs(Height * Math.Sin(angleR)));
+            uint nh = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleR)) + Math.Abs(Height * Math.Cos(angleR)));
 
             Pixel[,] newPixels = new Pixel[nh, nw];
             for (int row = 0; row < nh; row++) {
@@ -292,22 +292,19 @@
                     newPixels[row, col] = new Pixel(0, 0, 0);
                 }
             }
-
-            double x, y;
-            uint x_int, y_int;
+            
             for (int row = 0; row < Height; row++) {
                 for (int col = 0; col < Width; col++) {
-                    x = (col - Width / 2) * Math.Cos(angle * Math.PI / 180) - (row - Height / 2) * Math.Sin(angle * Math.PI / 180) + nw / 2;
-                    y = (col - Width / 2) * Math.Sin(angle * Math.PI / 180) + (row - Height / 2) * Math.Cos(angle * Math.PI / 180) + nh / 2;
-                    x_int = (uint)Math.Round(x);
-                    y_int = (uint)Math.Round(y);
-                    newPixels[y_int, x_int] = Pixels[row, col];
+                    uint x = (uint)Math.Round((col - Width / 2) * Math.Cos(angleR) - (row - Height / 2) * Math.Sin(angleR) + nw / 2);
+                    uint y = (uint)Math.Round((col - Width / 2) * Math.Sin(angleR) + (row - Height / 2) * Math.Cos(angleR) + nh / 2);
 
-                    if (x_int > 0 && x_int < nw - 1 && y_int > 0 && y_int < nh - 1) {
-                        newPixels[y_int, x_int + 1].UpdateIfNotEmpty(Pixels[row, col]);
-                        newPixels[y_int, x_int - 1].UpdateIfNotEmpty(Pixels[row, col]);
-                        newPixels[y_int + 1, x_int].UpdateIfNotEmpty(Pixels[row, col]);
-                        newPixels[y_int - 1, x_int].UpdateIfNotEmpty(Pixels[row, col]);
+                    newPixels[y, x] = Pixels[row, col];
+
+                    if (x > 0 && x < nw - 1 && y > 0 && y < nh - 1) {
+                        newPixels[y, x + 1].UpdateIfEmpty(Pixels[row, col]);
+                        newPixels[y, x - 1].UpdateIfEmpty(Pixels[row, col]);
+                        newPixels[y + 1, x].UpdateIfEmpty(Pixels[row, col]);
+                        newPixels[y - 1, x].UpdateIfEmpty(Pixels[row, col]);
                     }
                 }
             }

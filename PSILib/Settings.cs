@@ -31,7 +31,7 @@ public class ImageSettings {
     public ImageSettings(int maxWidth, int maxHeight, int maxSize) {
         SetMaxWidth(maxWidth);
         SetMaxHeight(maxHeight);
-        SetMaxSize(maxFileSize);
+        SetMaxSize(maxSize);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public class ImageSettings {
     /// </summary>
     /// <returns>The string representation of the settings.</returns>
     public override string ToString() {
-        return $"ImageSettings(maxWidth: {MaxWidth}, maxHeight: {MaxHeight}, maxFileSize: {MaxFileSize})";
+        return $"ImageSettings(maxWidth: {MaxWidth}, maxHeight: {MaxHeight}, maxSize: {MaxSize})";
     }
 
 
@@ -48,7 +48,7 @@ public class ImageSettings {
     /// </summary>
     /// <param name="maxWidth">The maximum width of the image, must be 1px or more.</param>
     /// <returns>The settings.</returns>
-    public ExportSettings SetMaxWidth(int maxWidth) {
+    public ImageSettings SetMaxWidth(int maxWidth) {
         MaxWidth = ValidateSupToZero(maxWidth, "maxWidth");
         return this;
     }
@@ -58,7 +58,7 @@ public class ImageSettings {
     /// </summary>
     /// <param name="maxHeight">The maximum height of the image, must be 1px or more.</param>
     /// <returns>The settings.</returns>
-    public ExportSettings SetMaxHeight(int maxHeight) {
+    public ImageSettings SetMaxHeight(int maxHeight) {
         MaxHeight = ValidateSupToZero(maxHeight, "maxHeight");
         return this;
     }
@@ -68,7 +68,7 @@ public class ImageSettings {
     /// </summary>
     /// <param name="maxSize">The maximum size of the image, must be 1px or more.</param>
     /// <returns>The settings.</returns>
-    public ExportSettings SetMaxSize(int maxSize) {
+    public ImageSettings SetMaxSize(int maxSize) {
         MaxSize = ValidateSupToZero(maxSize, "maxSize");
         return this;
     }
