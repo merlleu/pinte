@@ -289,7 +289,7 @@
             Pixel[,] newPixels = new Pixel[nh, nw];
             for (int row = 0; row < nh; row++) {
                 for (int col = 0; col < nw; col++) {
-                    newPixels[row, col] = new Pixel(0, 0, 0);
+                    newPixels[row, col] = new Pixel();
                 }
             }
             
@@ -298,7 +298,7 @@
                     uint x = (uint)Math.Round((col - Width / 2) * Math.Cos(angleR) - (row - Height / 2) * Math.Sin(angleR) + nw / 2);
                     uint y = (uint)Math.Round((col - Width / 2) * Math.Sin(angleR) + (row - Height / 2) * Math.Cos(angleR) + nh / 2);
 
-                    newPixels[y, x] = Pixels[row, col];
+                    if (x < nw && y < nh) newPixels[y, x] = Pixels[row, col];
 
                     if (x > 0 && x < nw - 1 && y > 0 && y < nh - 1) {
                         newPixels[y, x + 1].UpdateIfEmpty(Pixels[row, col]);
