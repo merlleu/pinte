@@ -473,7 +473,33 @@
             Pixels = newPixels;
         }
         #endregion
-
+        
+        #region Comparisons
+        /// <summary>
+        /// Compares the image to another image.
+        /// Mutate the image to highlight the differences.
+        /// </summary>
+        /// <param name="other">The other image</param>
+        /// <returns>True if the images are equal, false otherwise</returns>
+        public bool Diff(MyImage other) {
+            if (Width != other.Width || Height != other.Height) {
+                throw new ArgumentException("Images must have the same dimensions");
+            }
+            bool equal = true;
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    if (!Pixels[i, j].Equals(other.Pixels[i, j])) {
+                        equal = false;
+                        Pixels[i, j].DistanceAbs(other.Pixels[i, j]);
+                    } else {
+                        Pixels[i, j] = new Pixel();
+                    }
+                }
+            }
+            return equal;
+        }
+        #endregion
+        
         #region Filters
         /// <summary>
         /// Revert all RGB colors of the image.
@@ -630,7 +656,7 @@
         }
 
         #endregion
-
+        
         #region Steganography
         /// <summary>
         /// Hide the image `img` in the current image, at the position (x, y).
@@ -666,6 +692,7 @@
             }
         }
         #endregion
+        
         #region Utils
         /// <summary>
         /// Clone the image.

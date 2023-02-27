@@ -94,6 +94,16 @@ namespace PSILib {
             Green = (byte)((Green & ((1 << bits) - 1)) << (8 - bits));
             Blue = (byte)((Blue & ((1 << bits) - 1)) << (8 - bits));
         }
+
+        /// <summary>
+        /// Turn the pixel into a the absolute distance between the pixel and the given pixel.
+        /// </summary>
+        /// <param name="pixel">The pixel to use</param>
+        public void DistanceAbs(Pixel pixel) {
+            Red = (byte)Math.Abs((int)Red - (int)pixel.Red);
+            Green = (byte)Math.Abs((int)Green - (int)pixel.Green);
+            Blue = (byte)Math.Abs((int)Blue - (int)pixel.Blue);
+        }
         #endregion
 
         #region Utils
