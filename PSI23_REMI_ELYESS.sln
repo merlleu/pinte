@@ -5,8 +5,6 @@ VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSILib", "PSILib\PSILib.csproj", "{2ED420B7-77C3-4AA0-B2A8-7086C719E5A4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{8ED8D48B-045A-4029-894D-EFE1E608E29C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{80B0016C-BBA5-4B0F-AEBD-BE8ACD5D899A}"
 EndProject
 Global
