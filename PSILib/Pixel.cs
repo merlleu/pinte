@@ -80,6 +80,8 @@ namespace PSILib {
         /// <param name="pixel">The pixel to use</param>
         /// <param name="bits">The number of bits to replace</param>
         public void InsertLSB(Pixel pixel, int bits) {
+            // We only keep the len(integer) - bits msb of each colors from the original image,
+            // then store the 'bits' lsb of each colors of the image to hide.
             Red = (byte)((Red & ~((1 << bits) - 1)) | (pixel.Red >> (8 - bits)));
             Green = (byte)((Green & ~((1 << bits) - 1)) | (pixel.Green >> (8 - bits)));
             Blue = (byte)((Blue & ~((1 << bits) - 1)) | (pixel.Blue >> (8 - bits)));
@@ -90,9 +92,11 @@ namespace PSILib {
         /// </summary>
         /// <param name="bits">The number of bits to extract</param>
         public void ExtractLSB(int bits) {
-            Red = (byte)((Red & ((1 << bits) - 1)) << (8 - bits));
-            Green = (byte)((Green & ((1 << bits) - 1)) << (8 - bits));
-            Blue = (byte)((Blue & ((1 << bits) - 1)) << (8 - bits));
+            // We only keep the 'bits' lsb of each colors,
+            // To do so, we shift the colors to the right by len(integer) - bits.
+            Red = (byte)(Red << (8 - bits));
+            Green = (byte)(Green << (8 - bits));
+            Blue = (byte)(Blue << (8 - bits));
         }
 
         /// <summary>
