@@ -90,5 +90,20 @@ namespace Tests
             img3.EdgeDetection();
             Utils.CompareWithRef(img3, "EdgeDetectionLac");
         }
+
+        [Fact]
+        public void Coco() {
+            // we just create the generated folder if it doesn't exist
+            Utils.InitOutputFolder();
+            
+            var img = new PSILib.MyImage(Utils.GetPath("resources/coco.bmp"));
+            var img3 = img.Clone();
+            img3.Sharpen();
+            Utils.CompareWithRef(img3, "Sharpencoco");
+
+            img3 = img.Clone();
+            img3.EdgeDetection(gray: false);
+            Utils.CompareWithRef(img3, "EdgeDetectioncoco");
+        }
     }
 }
