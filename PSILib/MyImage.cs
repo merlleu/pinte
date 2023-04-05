@@ -201,73 +201,6 @@
 
         #endregion
 
-        #region Compression
-        
-
-        /// <summary>
-        /// Deserialize a BMP grid from a byte array in BI_BITFIELDS compression mode.
-        /// </summary>
-        /// <param name="bytes">The byte array to deserialize</param>
-        /// <returns>A 2D array of pixels</returns>
-        private void ParsePixelsBitFieldCompression(byte[] bytes, int offset) {
-            uint red_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 54);
-            uint green_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 58);
-            uint blue_mask = (uint)Convertir_Endian_To_Int(bytes, 4, 62);
-
-            int red_shift = GetShiftCount(red_mask);
-            int green_shift = GetShiftCount(green_mask);
-            int blue_shift = GetShiftCount(blue_mask);
-
-            int red_bits = GetBitCount(red_mask);
-            int green_bits = GetBitCount(green_mask);
-            int blue_bits = GetBitCount(blue_mask);
-
-            int RowSize = (int) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
-            
-            for (int i = 0; i < Height; i++) {
-                int pos = i*RowSize + offset;
-                for (int j = 0; j < Width; j++) {
-                    uint pixel = (uint)Convertir_Endian_To_Int(bytes, 4, (uint)pos);
-                    pos += 4;
-                    Pixels[i, j] = new Pixel(
-                        (byte)((pixel & red_mask) >> red_shift),
-                        (byte)((pixel & green_mask) >> green_shift),
-                        (byte)((pixel & blue_mask) >> blue_shift)
-                    );
-                }
-            }
-        } 
-
-        /// <summary>
-        /// Get the number of bits in a mask.
-        /// </summary>
-        /// <param name="mask">The mask to analyze</param>
-        /// <returns>The number of bits</returns>
-        private int GetBitCount(uint mask) {
-            int count = 0;
-            while (mask != 0) {
-                count += (int)(mask & 1);
-                mask >>= 1;
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Get the shift count of a mask.
-        /// </summary>
-        /// <param name="mask">The mask to analyze</param>
-        /// <returns>The shift count</returns>
-        private int GetShiftCount(uint mask) {
-            int count = 0;
-            while ((mask & 1) == 0) {
-                count++;
-                mask >>= 1;
-            }
-            return count;
-        }
-
-        #endregion
-
         #region Operations
         /// <summary>
         /// Rotate the image by a given angle.
@@ -682,7 +615,10 @@
         /// <param name="y">The y position</param>
         /// <param name="dx">The width of the image to extract</param>
         /// <param name="dy">The height of the image to extract</param>
-        public void ExtractImage(uint x, uint y, uint dx, uint dy, int bits = 4) {
+        public void ExtractImage(uint x=0, uint y=0, uint dx=0, uint dy=0, int bits = 4) {
+            if (dx == 0) dx = Width;
+            if (dy == 0) dy = Height;
+            
             CheckDimensions(x+dx, y+dy);
 
             for (int i = 0; i < dy; i++) {
@@ -718,7 +654,5 @@
                 throw new Exception($"{this} is too small, required: (width: {width}, height: {height}).");
         }
         #endregion 
-    }
-
-    
+    } 
 }
