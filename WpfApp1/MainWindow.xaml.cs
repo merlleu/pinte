@@ -34,8 +34,8 @@ namespace WpfApp1
             InitializeComponent();
             this.uuid = Guid.NewGuid().ToString();
             this.image = image;
-            this.filename = filename;
-            this.Title = filename + " - Pinte - Comme MS Paint(tm) mais en moins bien. Rémi L - Elyess K";
+            this.filename = filename.Substring(filename.LastIndexOf("\\") + 1);
+            this.Title = this.filename + " - Pinte - Comme MS Paint(tm) mais en moins bien. Rémi L - Elyess K";
             this.debugConsole = debugConsole;
             debugConsole.SetParent(windowID);
             this.Height = image.Height + 200;
@@ -404,7 +404,7 @@ namespace WpfApp1
                 .Int("Bits", "The number of bits used to hide.", 1, 8, 3)
                 .Int("X", "The X position of the image.", 0, (int)(this.image.Width), 0)
                 .Int("Y", "The Y position of the image.", 0, (int)(this.image.Height), 0)
-                .Int("Width", "The width of the image.", 1, (int)(this.image.Height), (int)(this.image.Height))
+                .Int("Width", "The width of the image.", 1, (int)(this.image.Width), (int)(this.image.Width))
                 .Int("Height", "The height of the image.", 1, (int)(this.image.Height), (int)(this.image.Height))
                 .Finish();
             
@@ -434,7 +434,7 @@ namespace WpfApp1
         {
             CloseOpenedMenus();
             var PopupAsk = new OperationSettingsPopup("Hide text", this.debugConsole)
-                .Text("Text", "The text to hide.", "Pinte >>>> Paint !", (int)(this.image.Height * this.image.Width/3))
+                .Text("Text", "The text to hide.", "Pinte >>>> Paint !", 0, (int)(this.image.Height * this.image.Width/3))
                 .Finish();
             
             PopupAsk.ShowDialog();
