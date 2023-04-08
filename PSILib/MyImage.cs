@@ -1,5 +1,6 @@
 ﻿namespace PSILib
 {
+    using System.Text;
     using static Constants;
     public class MyImage
     {
@@ -52,7 +53,7 @@
             }
 
             uint compression = Convertir_Endian_To_Int(bytes, 4, 30);
-            if (compression != BI_RGB && compression != BI_BITFIELDS) {
+            if (compression != BI_RGB) {
                 throw new ArgumentException("Compression must be BI_RGB or BI_BITFIELDS.");
             }
 
@@ -72,6 +73,18 @@
             this.Height = Height;
             this.BitsPerPixel = BitsPerPixel;
             this.Pixels = Pixels;
+        }
+
+        public MyImage(uint Width, uint Height, Pixel color) {
+            this.Width = Width;
+            this.Height = Height;
+            this.BitsPerPixel = 24;
+            this.Pixels = new Pixel[Height, Width];
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    Pixels[i, j] = color.Clone();
+                }
+            }
         }
 
         /// <summary>
@@ -215,7 +228,7 @@
             if (angle % 90 != 0 && resize_factor != 1) {
                 Resize(resize_factor);
             }
-            double angleR = angle * Math.PI / 180;
+            double angleR = -angle * Math.PI / 180;
             uint nw = (uint)Math.Ceiling(Math.Abs(Width * Math.Cos(angleR)) + Math.Abs(Height * Math.Sin(angleR)));
             uint nh = (uint)Math.Ceiling(Math.Abs(Width * Math.Sin(angleR)) + Math.Abs(Height * Math.Cos(angleR)));
 
@@ -626,6 +639,46 @@
                     Pixels[i + y, j + x].ExtractLSB(bits);
                 }
             }
+        }
+        
+        /// <summary>
+        /// Hide the text `text` in the current image.
+        /// </summary>
+        /// <param name="text">The text to hide</param>
+        public void HideText(string text) {
+            byte[] bytes = Encoding.ASCII.GetBytes(text);
+            // add stop byte
+            bytes = bytes.Concat(new byte[] {0}).ToArray();
+
+            int index = 0;
+            
+            // we store each byte in a pixel
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    if (index >= bytes.Length)
+                        return;
+                    
+
+                    Pixels[i, j].InsertByteInLSB(bytes[index]);
+                    index++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extract the text from the current image.
+        /// </summary>
+        public string ExtractText() {
+            string text = "";
+            for (int i = 0; i < Height; i++) {
+                for (int j = 0; j < Width; j++) {
+                    byte bt = Pixels[i, j].ExtractByteFromLSB();
+                    if (bt == 0)
+                        return text;
+                    text += (char) bt;
+                }
+            }
+            return text;
         }
         #endregion
         

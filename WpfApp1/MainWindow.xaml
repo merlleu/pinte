@@ -1,0 +1,89 @@
+﻿<Window x:Class="WpfApp1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1"
+        mc:Ignorable="d"
+        Title="Pinte - Comme MS Paint(tm) mais en moins bien. Rémi L - Elyess K" Height="500" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="71*"/>
+            <ColumnDefinition Width="0*"/>
+            <ColumnDefinition Width="729*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!--Header-->
+        <DockPanel Grid.Row="0" Background="#333333" Height="60" Grid.ColumnSpan="3">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/pinte.png" Width="131" Height="60"/>
+                <Button x:Name="OpenFileButton" Content="New"  Click="NewFile_Click" Margin="0,10" Width="67" Height="23"/>
+                <Button x:Name="SaveFileButton" Content="Save" Click="SaveFile_Click" Margin="10,10" Width="67" Height="23"/>
+                <TextBlock x:Name="FileNameTextBlock" Foreground="White" Margin="0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="10" Height="24">
+                <Grid>
+                    <ToggleButton x:Name="ImageButton" Padding="5,0" Width="60">
+                        Image
+                    </ToggleButton>
+                    <Popup x:Name="ImageMenu" PlacementTarget="{Binding ElementName=ImageButton}" IsOpen="{Binding ElementName=ImageButton, Path=IsChecked}" StaysOpen="False">
+                        <StackPanel>
+                            <Button Content="Resize" Click="Resize_Click" Padding="10,5" />
+                            <Button Content="Rotate" Click="Rotate_Click" Padding="10,5" />
+                            <Button Content="Remove Borders" Click="RemoveBorders_Click" Padding="10,5" />
+                            <Button Content="Add borders" Click="AddBorders_Click" Padding="10,5" />
+                            <Button Content="Crop" Click="Crop_Click" Padding="10,5" />
+                            <Button Content="Difference" Click="Difference_Click" Padding="10,5" />
+                        </StackPanel>
+                    </Popup>
+                </Grid>
+                <Grid Margin="10,0">
+                    <ToggleButton x:Name="EffectsButton" Padding="5,0" Width="60">
+                        Effects
+                    </ToggleButton>
+                    <Popup x:Name="EffectsMenu" PlacementTarget="{Binding ElementName=EffectsButton}" IsOpen="{Binding ElementName=EffectsButton, Path=IsChecked}" StaysOpen="False">
+                        <StackPanel>
+                            <Button Content="Grayscale" Padding="10,5" Click="Grayscale_Click"/>
+                            <Button Content="Negative" Padding="10,5" Click="Negative_Click"/>
+                            <Button Content="Edge Detection" Padding="10,5" Click="EdgeDetection_Click"/>
+                            <Button Content="Sharpen" Padding="10,5" Click="Sharpen_Click"/>
+                            <Button Content="Gaussian Blur" Padding="10,5" Click="GaussianBlur_Click"/>
+                            <Button Content="Box Blur" Padding="10,5" Click="BoxBlur_Click"/>
+                            <Button Content="Unsharp Mask" Padding="10,5" Click="UnsharpMask_Click"/>
+                            <Button Content="Custom Kernel" Padding="10,5" Click="CustomKernel_Click"/>
+                        </StackPanel>
+                    </Popup>
+                </Grid>
+                <Grid>
+                    <ToggleButton x:Name="StegaButton" Padding="5,0" Width="100">
+                        Spy Tools
+                    </ToggleButton>
+                    <Popup x:Name="StegaMenu" PlacementTarget="{Binding ElementName=StegaButton}" IsOpen="{Binding ElementName=StegaButton, Path=IsChecked}" StaysOpen="False">
+                        <StackPanel>
+                            <Button Content="Hide Image" Padding="10,5" Click="HideImage"/>
+                            <Button Content="Retrieve Image Back" Click="RetrieveHiddenImage" Padding="10,5"/>
+                            <Button Content="Hide Text" Padding="10,5" Click="HideText"/>
+                            <Button Content="Retrieve Text" Padding="10,5" Click="RetrieveHiddenText"/>
+                        </StackPanel>
+                    </Popup>
+                </Grid>
+            </StackPanel>
+        </DockPanel>
+
+        <!--Body-->
+        <Grid Grid.Row="1" Grid.ColumnSpan="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0" Margin="10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Image x:Name="ImagePreview" Stretch="None" VerticalAlignment="Center"/>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

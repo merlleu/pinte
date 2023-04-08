@@ -82,9 +82,9 @@ namespace PSILib {
         public void InsertLSB(Pixel pixel, int bits) {
             // We only keep the len(integer) - bits msb of each colors from the original image,
             // then store the 'bits' lsb of each colors of the image to hide.
-            Red = (byte)((Red & ~((1 << bits) - 1)) | (pixel.Red >> (8 - bits)));
-            Green = (byte)((Green & ~((1 << bits) - 1)) | (pixel.Green >> (8 - bits)));
-            Blue = (byte)((Blue & ~((1 << bits) - 1)) | (pixel.Blue >> (8 - bits)));
+            Red = (byte)((Red >> bits) << bits | (pixel.Red >> (8 - bits)));
+            Green = (byte)((Green >> bits) << bits | (pixel.Green >> (8 - bits)));
+            Blue = (byte)((Blue >> bits) << bits | (pixel.Blue >> (8 - bits)));
         }
 
         /// <summary>
@@ -97,6 +97,23 @@ namespace PSILib {
             Red = (byte)(Red << (8 - bits));
             Green = (byte)(Green << (8 - bits));
             Blue = (byte)(Blue << (8 - bits));
+        }
+
+        /// <summary>
+        /// Insert a byte in the lsb of the pixel.
+        /// byte=0bABCDEFGH
+        /// RED=0bXXXXXXAB
+        /// GREEN=0bXXXXXCDE
+        /// BLUE=0bXXXXXFGH
+        /// </summary>
+        public void InsertByteInLSB(byte b) {
+            Red = (byte)((Red >> 2) << 2 | (b >> 6));
+            Green = (byte)((Green >> 3) << 3 | (b >> 3));
+            Blue = (byte)((Blue >> 3) << 3 | (b & 0b111));
+        }
+
+        public byte ExtractByteFromLSB() {
+            return (byte)((Red & 0b11) << 6 | (Green & 0b111) << 3 | (Blue & 0b111));
         }
 
         /// <summary>
