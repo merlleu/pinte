@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using PSILib;
 
-namespace WpfApp1
+namespace PinteUI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -53,13 +53,19 @@ namespace WpfApp1
         }
 
         private void RenderPreview() {
+            // Create the temp folder if it doesn't exist
+            if (!System.IO.Directory.Exists(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pinte-cache"))) {
+                System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pinte-cache"));
+                this.debugConsole.WriteLine("[Main/RenderPreview] Created temp folder");
+            }
+
             // save image to temp file in the appdata temp folder with a random name & load it in the preview
-            var oldUuid = this.uuid;
             this.uuid = Guid.NewGuid().ToString();
-            var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), this.uuid + ".bmp");
+
+            var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pinte-cache", this.uuid + ".bmp");
             this.image.Save(tempPath);
 
-            this.debugConsole.WriteLine(tempPath);
+            this.debugConsole.WriteLine($"[Main/RenderPreview] Saved image to {tempPath}");
 
             BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
@@ -67,11 +73,17 @@ namespace WpfApp1
             bitmap.EndInit();
             this.ImagePreview.Source = bitmap;
 
-            // delete old temp file
-            // var oldTempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), oldUuid + ".bmp");
-            // if (System.IO.File.Exists(oldTempPath)) {
-            //     System.IO.File.Delete(oldTempPath);
-            // }
+            // delete old temp files
+            foreach (string file in System.IO.Directory.GetFiles(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pinte-cache"))) {
+                if (file != tempPath) {
+                    try {
+                        System.IO.File.Delete(file);
+                        this.debugConsole.WriteLine("[Main/RenderPreview] Deleted " + file);
+                    } catch {
+
+                    }
+                }
+            }
         }
 
         public void SaveFile_Click(object sender, RoutedEventArgs e)
@@ -93,9 +105,8 @@ namespace WpfApp1
 
         public void NewFile_Click(object sender, RoutedEventArgs e)
         {
-            // open a new window in parallel
-            var home = new Window1();
-            home.Show();
+            // open a instance of the app
+            System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location);
         }
 
         private void CloseOpenedMenus()

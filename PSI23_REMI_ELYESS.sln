@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSILib", "PSILib\PSILib.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{80B0016C-BBA5-4B0F-AEBD-BE8ACD5D899A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1", "WpfApp1\WpfApp1.csproj", "{A42660A7-DA2B-4948-9FD4-8B79738D2E54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PinteUI", "PinteUI\PinteUI.csproj", "{A42660A7-DA2B-4948-9FD4-8B79738D2E54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

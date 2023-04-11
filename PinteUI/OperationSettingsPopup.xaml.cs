@@ -14,7 +14,7 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using PSILib;
 
-namespace WpfApp1
+namespace PinteUI
 {
     /// <summary>
     /// Interaction logic for OperationSettingsPopup.xaml
@@ -30,7 +30,7 @@ namespace WpfApp1
         /// <summary>
         ///  Creates a Popup builder
         /// </summary>
-        /// <param name="operationName">the builder</param>
+        /// <param name="operationName">the name of the popup</param>
         public OperationSettingsPopup(string operationName, DebugConsole debugConsole)
         {
             InitializeComponent();

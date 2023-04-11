@@ -14,7 +14,7 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using PSILib;
 
-namespace WpfApp1;
+namespace PinteUI;
 
 public partial class DebugConsole : Window
 {
@@ -23,7 +23,8 @@ public partial class DebugConsole : Window
     public DebugConsole(int parentId)
     {
         InitializeComponent();
-        Enabled = true;
+        // only enabled if --debug is passed
+        Enabled = Environment.GetCommandLineArgs().Contains("--debug");
         if (Enabled) this.Show();
         currentParent = parentId;
     }
@@ -36,17 +37,17 @@ public partial class DebugConsole : Window
 
     public void OnParentClosed(int parentId)
     {
-        WriteLine($"Parent Closed: {parentId}, currentOwner: {currentParent}");
+        WriteLine($"[DebugConsole] Parent Closed: {parentId}, currentOwner: {currentParent}");
         if (currentParent == parentId)
         {
-            WriteLine("Closing Console...");
+            WriteLine("[DebugConsole] Closing Console...");
             this.Close();
         }
     }
 
     public void SetParent(int parentId)
     {
-        WriteLine($"Setting Parent: {parentId}");
+        WriteLine($"[DebugConsole] Setting Parent: {parentId}");
         currentParent = parentId;
     }
 }

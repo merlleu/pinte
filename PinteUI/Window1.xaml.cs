@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using PSILib;
 
-namespace WpfApp1
+namespace PinteUI
 {
     /// <summary>
     /// Interaction logic for Window1.xaml
