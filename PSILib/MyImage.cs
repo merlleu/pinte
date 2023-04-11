@@ -132,7 +132,7 @@
         /// <param name="bits">The size of the integer in bytes</param>
         /// <param name="pos">The position in the array</param>
         /// <returns>The little endian int</returns>
-        private uint Convertir_Endian_To_Int(byte[] tab, uint bytes, uint pos) {
+        public static uint Convertir_Endian_To_Int(byte[] tab, uint bytes, uint pos) {
             // convert n bits from tab[pos] to a little endian int
             uint res = 0;
             for (int i = 0; i < bytes; i++) {
@@ -149,7 +149,7 @@
         /// <param name="n">The number to convert</param>
         /// <param name="bits">The size of the integer in bits</param>
         /// <returns>The little endian byte array</returns>
-        private byte[] Convertir_Int_To_Endian(uint n, uint bytes) {
+        public static byte[] Convertir_Int_To_Endian(uint n, uint bytes) {
             // convert n to a little endian byte array of size bits
             byte[] res = new byte[bytes];
             for (int i = 0; i < bytes; i++) {
@@ -166,7 +166,7 @@
         /// <param name="bits">The size of the integer in bits</param>
         /// <param name="pos">The position in the array</param>
         /// <param name="tab">The array</param>
-        private void Convertir_Int_To_Endian(uint val, byte[] tab, uint bytes, uint pos) {
+        public static void Convertir_Int_To_Endian(uint val, byte[] tab, uint bytes, uint pos) {
             // convert n bits from tab[pos] to a little endian int
             for (int i = 0; i < bytes; i++) {
                 tab[pos + i] = (byte) (val >> (i * 8));
