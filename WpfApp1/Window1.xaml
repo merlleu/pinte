@@ -32,7 +32,11 @@
         </StackPanel>
 
         <!--Mention-->
-        <TextBlock Grid.Column="1" Grid.Row="2" Margin="1,50,0,6" FontSize="10" Grid.ColumnSpan="2"><Run Text="Projet scientifique informatique "/><Run Language="fr-fr" Text="ESILV"/><Run Text=" "/><Run Language="fr-fr" Text="A"/><Run Text="2 2023"/><LineBreak/><Run Text="Rémi Langdorph"/><LineBreak/><Run Text="Elyess K"/></TextBlock>
+        <TextBlock Grid.Column="1" Grid.Row="2" Margin="1,50,0,6" FontSize="10" Grid.ColumnSpan="2">
+            <Run Text="Projet scientifique informatique "/><Run Language="fr-fr" Text="ESILV"/><Run Text=" "/>
+            <Run Language="fr-fr" Text="A"/><Run Text="2 2023"/><LineBreak/>
+            <Run Text="Rémi Langdorph"/><LineBreak/>
+            <Run Text="Elyess Khadraoui"/></TextBlock>
 
     </Grid>
 </Window>
