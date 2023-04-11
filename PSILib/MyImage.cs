@@ -17,7 +17,7 @@
         /// Create a new image reading the file at the given path.
         /// </summary>
         /// <param name="path">Path to the image file.</param>
-        public MyImage(string path, ImageSettings settings = null) {
+        public MyImage(string path, ImageSettings? settings = null) {
             if (settings == null) {
                 settings = new ImageSettings();
             }
@@ -58,20 +58,18 @@
                 throw new ArgumentException("Bits per pixel must be 24.");
             }
 
-            uint compression = Convertir_Endian_To_Int(bytes, 4, 30);
-            if (compression != BI_RGB) {
-                throw new ArgumentException("Compression must be BI_RGB or BI_BITFIELDS.");
-            }
-
-            // check file length
-            if (Width*Height > 1_000_000_000) {
-                throw new ArgumentException("Image is too big.");
-            }
-            if (offset + BitsPerPixel*Width*Height/8 > bytes.Length) {
-                throw new ArgumentException("File length is not correct.");
-            }
             Pixels = new Pixel[Height, Width];
-            ParsePixels(bytes, offset);
+
+            uint compression = Convertir_Endian_To_Int(bytes, 4, 30);
+            
+            if (compression == BI_RGB) {
+                ParsePixels(bytes, offset);
+            } else if (compression == BI_HUFFMAN1D) {
+                var huffman = new Huffman1D(Pixels);
+                huffman.Decode(bytes, offset);
+            } else {
+                throw new ArgumentException("Compression must be BI_RGB or BI_HUFFMAN1D.");
+            }
         }
 
         public MyImage(uint Width, uint Height, uint BitsPerPixel, Pixel[,] Pixels) {
@@ -183,7 +181,7 @@
         /// Save the image to a file
         /// </summary>
         /// <param name="path">The path to the file</param>
-        public void Save(string path) {
+        public void Save(string path, int compression = 0) {
             uint RowSize = (uint) Math.Ceiling((double)Width * BitsPerPixel / 32) * 4;
             uint dib_header_size = 40;
             uint offset = 14 + dib_header_size;
@@ -200,19 +198,41 @@
             Convertir_Int_To_Endian(Height, bytes, 4, 22);
             Convertir_Int_To_Endian(1, bytes, 2, 26);
             Convertir_Int_To_Endian(BitsPerPixel, bytes, 2, 28);
+            Convertir_Int_To_Endian((uint)compression, bytes, 4, 30);
 
             uint pos = offset;
-
-            for (uint i = 0; i < Height; i++) {
-                pos = i*RowSize + offset;
-                for (int j = 0; j < Width; j++) {
-                    Convertir_Int_To_Endian(Pixels[i, j].Blue, bytes, 1, pos);
-                    pos += 1;
-                    Convertir_Int_To_Endian(Pixels[i, j].Green, bytes, 1, pos);
-                    pos += 1;
-                    Convertir_Int_To_Endian(Pixels[i, j].Red, bytes, 1, pos);
-                    pos += 1;
+            if (compression == BI_RGB) {
+                for (uint i = 0; i < Height; i++) {
+                    pos = i*RowSize + offset;
+                    for (int j = 0; j < Width; j++) {
+                        Convertir_Int_To_Endian(Pixels[i, j].Blue, bytes, 1, pos);
+                        pos += 1;
+                        Convertir_Int_To_Endian(Pixels[i, j].Green, bytes, 1, pos);
+                        pos += 1;
+                        Convertir_Int_To_Endian(Pixels[i, j].Red, bytes, 1, pos);
+                        pos += 1;
+                    }
                 }
+            } else if (compression == BI_HUFFMAN1D) {
+                // compress the image
+                var huffman = new Huffman1D(Pixels);
+                var compressed = huffman.Encode();
+
+                // update the size of the file
+                size = offset + (uint) compressed.Length;
+                Convertir_Int_To_Endian(size, bytes, 4, 2);
+
+                // merge the compressed data with the header
+                byte[] newBytes = new byte[size];
+                for (int i = 0; i < offset; i++) {
+                    newBytes[i] = bytes[i];
+                }
+                for (int i = 0; i < compressed.Length; i++) {
+                    newBytes[pos+i] = compressed[i];
+                }
+                bytes = newBytes;
+            } else {
+                throw new Exception("Compression not supported");
             }
 
             File.WriteAllBytes(path, bytes);

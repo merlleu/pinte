@@ -90,7 +90,7 @@ namespace PinteUI
         {
             // save image to file
             SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Bitmap Files (*.bmp)|*.bmp";
+            saveFileDialog.Filter = "Bitmap Files (*.bmp)|*.bmp|BeerMP Compressed Files (*.beermp)|*.beermp";
             bool? result = saveFileDialog.ShowDialog();
 
             if (result == true)
@@ -98,6 +98,7 @@ namespace PinteUI
                 string filename = saveFileDialog.FileName;
                 if (filename != null)
                 {
+                    int compression = filename.EndsWith(".beermp") ? PSILib.Constants.BI_HUFFMAN1D : 0;
                     this.image.Save(filename);
                 }
             }
@@ -105,8 +106,9 @@ namespace PinteUI
 
         public void NewFile_Click(object sender, RoutedEventArgs e)
         {
-            // open a instance of the app
-            System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            // open a instance of the startup window
+            var startup = new Window1();
+            startup.Show();
         }
 
         private void CloseOpenedMenus()

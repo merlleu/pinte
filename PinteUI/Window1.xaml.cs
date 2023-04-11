@@ -44,7 +44,7 @@ namespace PinteUI
         {
             // Create OpenFileDialog with only .bmp files
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Bitmap Files (*.bmp)|*.bmp";
+            openFileDialog.Filter = "Bitmap Files (*.bmp)|*.bmp|BeerMP Compressed Files (*.beermp)|*.beermp";
 
             // Display OpenFileDialog by calling ShowDialog method
             bool? result = openFileDialog.ShowDialog();
