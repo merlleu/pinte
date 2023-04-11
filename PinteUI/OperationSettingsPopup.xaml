@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:PinteUI"
         xmlns:controls="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Input.Toolkit"
         mc:Ignorable="d"
+        Icon="{StaticResource AppIcon}"
         Title="Pinte" Height="100" Width="300">
     <Grid>
         <Grid.ColumnDefinitions>

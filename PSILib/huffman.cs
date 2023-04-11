@@ -7,6 +7,10 @@ public class HuffmanPixel1D {
     public HuffmanPixel1D(Pixel[,] pixels) {
         Pixels = pixels;
     }
+
+    public void Decompress(byte[] buffer) {
+        
+    }
 }
 
 public class PixelNode {

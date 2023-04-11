@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PinteUI"
         mc:Ignorable="d"
+        Icon="{StaticResource AppIcon}"
         Title="Pinte - Comme MS Paint(tm) mais en moins bien. Rémi L - Elyess K" Height="500" Width="300">
     <Grid>
         <Grid.ColumnDefinitions>

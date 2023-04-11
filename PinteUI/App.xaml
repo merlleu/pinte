@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:PinteUI"
              StartupUri="Window1.xaml">
     <Application.Resources>
-         
+          <BitmapImage x:Key="AppIcon" UriSource="pinte.ico"/>
     </Application.Resources>
 </Application>

@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Resource Include="pinte.png" />
+    <Resource Include="pinte.ico" />
   </ItemGroup>
 
 </Project>

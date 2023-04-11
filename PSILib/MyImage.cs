@@ -17,7 +17,11 @@
         /// Create a new image reading the file at the given path.
         /// </summary>
         /// <param name="path">Path to the image file.</param>
-        public MyImage(string path) {
+        public MyImage(string path, ImageSettings settings = null) {
+            if (settings == null) {
+                settings = new ImageSettings();
+            }
+            
             var bytes = File.ReadAllBytes(path);
             if (bytes.Length < 54) {
                 throw new ArgumentException("File is too small.");
@@ -40,6 +44,8 @@
 
             Width = Convertir_Endian_To_Int(bytes, 4, 18);
             Height = Convertir_Endian_To_Int(bytes, 4, 22);
+
+            settings.CheckMaxSize(Width, Height);
 
             uint planes = Convertir_Endian_To_Int(bytes, 2, 26);
             if (planes != 1) {
