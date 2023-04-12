@@ -15,9 +15,9 @@ public class ImageSettings {
     /// The default settings.
     /// </summary>
     /// <remarks>
-    /// MaxWidth = 1000
-    /// MaxHeight = 1000
-    /// MaxSize = 1_000_000
+    /// MaxWidth = 1_000_000
+    /// MaxHeight = 1_000_000
+    /// MaxSize = 1_000_000_000
     public ImageSettings() {
         MaxWidth = 1_000_000;
         MaxHeight = 1_000_000;
