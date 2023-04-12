@@ -6,11 +6,11 @@ namespace PSILib;
 
 /// This class handles the Huffman compression algorithm
 public class Huffman1D {
-    private Dictionary<int, int> occurences;
-    private List<PixelNode> nodes;
-    private PixelNode root;
+    private Dictionary<int, int>? occurences;
+    private List<PixelNode>? nodes;
+    private PixelNode? root;
     private Pixel[,] matrix;
-    private Dictionary<int, int> pixelToBytes;
+    private Dictionary<int, int>? pixelToBytes;
     private int currentId = 0;
 
     /// <summary>
@@ -45,6 +45,7 @@ public class Huffman1D {
     /// only one node left: the root of the tree.
     /// </summary>
     private void BuildTree() {
+        if (occurences == null) return;
         nodes = new List<PixelNode>();
         foreach (var pair in occurences) {
             nodes.Add(new PixelNode {
@@ -54,15 +55,18 @@ public class Huffman1D {
         }
 
         
-
+        nodes.Sort((a, b) => a.Count - b.Count);
         while (nodes.Count > 1) {
-            nodes.Sort((a, b) => a.Count - b.Count);
-            
             PixelNode left = nodes[0];
             PixelNode right = nodes[1];
             nodes.Remove(left);
             nodes.Remove(right);
-            nodes.Add(new PixelNode {
+            
+            int i = 0;
+            while (i < nodes.Count && nodes[i].Count < left.Count + right.Count) {
+                i++;
+            }
+            nodes.Insert(i, new PixelNode {
                 Left = left,
                 Right = right,
                 Count = left.Count + right.Count
@@ -75,7 +79,8 @@ public class Huffman1D {
     /// <summary>
     /// Assign an ID to each node of the tree.
     /// </summary>
-    private void IndexTree(PixelNode node) {
+    private void IndexTree(PixelNode? node) {
+        if (node == null || pixelToBytes == null) return;
         if (node.IsLeaf) {
             pixelToBytes[node.Pixel] = currentId;
             currentId++;
@@ -90,13 +95,15 @@ public class Huffman1D {
     /// </summary>
     /// <returns>The encoded matrix</returns>
     public byte[] Encode() {
-        Console.WriteLine("Encoding...");
         FindFrequencies();
-        Console.WriteLine("Frequencies found.");
         BuildTree();
-        Console.WriteLine("Tree built.");
+        pixelToBytes = new Dictionary<int, int>();
         IndexTree(root);
-        Console.WriteLine("Tree indexed.");
+
+        int[] NodeIdToPixel = new int[currentId];
+        foreach (var pair in pixelToBytes) {
+            NodeIdToPixel[pair.Value] = pair.Key;
+        }
         
         // clear unused data
         nodes = null;
@@ -106,12 +113,13 @@ public class Huffman1D {
         var treeBytes = new List<byte>();
         // number of nodes
         WriteVarInt(currentId, treeBytes);
+        
 
         // write the nodes
         for(int i = 0; i < currentId; i++) {
-            treeBytes.Add((byte) (pixelToBytes[i] >> 16));
-            treeBytes.Add((byte) (pixelToBytes[i] >> 8));
-            treeBytes.Add((byte) pixelToBytes[i]);
+            treeBytes.Add((byte) (NodeIdToPixel[i] >> 16));
+            treeBytes.Add((byte) (NodeIdToPixel[i] >> 8));
+            treeBytes.Add((byte) NodeIdToPixel[i]);
         }
 
         // encode the matrix
@@ -136,7 +144,7 @@ public class Huffman1D {
         // read the nodes
         var bytesToPixel = new Pixel[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            Pixel px = new Pixel(buffer[index], buffer[index + 1], buffer[index + 2]);
+            Pixel px = new Pixel(buffer[index + 2], buffer[index + 1], buffer[index]);
             index += 3;
             bytesToPixel[i] = px;
         }
@@ -204,8 +212,8 @@ public class Huffman1D {
 
 public class PixelNode {
     public int Pixel { get; set; }
-    public PixelNode Left { get; set; }
-    public PixelNode Right { get; set; }
+    public PixelNode? Left { get; set; }
+    public PixelNode? Right { get; set; }
     public int Count { get; set; }
 
     public bool IsLeaf => Left == null && Right == null;

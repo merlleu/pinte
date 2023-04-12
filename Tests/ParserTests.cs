@@ -113,6 +113,10 @@ namespace Tests
             
             var img = new PSILib.MyImage(Utils.GetPath("resources/wl1.bmp"));
             img.Save("test.beermp", compression: PSILib.Constants.BI_HUFFMAN1D);
+            var img2 = new PSILib.MyImage("test.beermp");
+            if (!img2.Diff(img)) {
+                throw new Exception("Compression failed");
+            }
         }
     }
 }
