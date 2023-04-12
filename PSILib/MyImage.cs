@@ -238,6 +238,25 @@
             File.WriteAllBytes(path, bytes);
         }
 
+        public static void CreateBMPBomb(string path, uint width, uint height){
+            uint dib_header_size = 40;
+            uint offset = 14 + dib_header_size;
+
+            var bytes = new byte[offset];
+            // headers
+            bytes[0] = 66;
+            bytes[1] = 77;
+            Convertir_Int_To_Endian(offset, bytes, 4, 2);
+            Convertir_Int_To_Endian(offset, bytes, 4, 10);
+            Convertir_Int_To_Endian(dib_header_size, bytes, 4, 14);
+            Convertir_Int_To_Endian(width, bytes, 4, 18);
+            Convertir_Int_To_Endian(height, bytes, 4, 22);
+            Convertir_Int_To_Endian(1, bytes, 2, 26);
+            Convertir_Int_To_Endian(24, bytes, 2, 28);
+
+            File.WriteAllBytes(path, bytes);
+        }
+
         #endregion
 
         #region Operations

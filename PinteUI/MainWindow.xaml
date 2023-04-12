@@ -69,6 +69,7 @@
                             <Button Content="Retrieve Image Back" Click="RetrieveHiddenImage" Padding="10,5"/>
                             <Button Content="Hide Text" Padding="10,5" Click="HideText"/>
                             <Button Content="Retrieve Text" Padding="10,5" Click="RetrieveHiddenText"/>
+                            <Button Content="Create BMP Bomb" Padding="10,5" Click="CreateBMPBomb"/>
                         </StackPanel>
                     </Popup>
                 </Grid>

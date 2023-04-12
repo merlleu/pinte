@@ -32,3 +32,8 @@ You can select the read/write mode when opening/saving a file via the file forma
 [![File format selector](resources/fileformatselector.png)](resources/fileformatselector.png)
 
 
+## BMP Bombs
+Most of the BMP implementations do have limits in place to avoid images with huge sizes, 
+Not having those will make you vulnerable to DoS attacks. Historically, in low level languages like C/C++, tons of memory vulnerabilities were based on giving a program fake dimensions, but this is not relevant for c#.
+Our project handle safely images of huge size by applying safe-by-default settings (can be removed/updated by the user).
+We included a "Create BMP Bomb" in the Spy Tools menu, it allows you to create a file with huge dimensions to perform DoS attacks on other BMP projects (only for educational purposes ;) ).

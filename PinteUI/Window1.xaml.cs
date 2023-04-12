@@ -52,9 +52,16 @@ namespace PinteUI
             if (result == true)
             {
                 string filename = openFileDialog.FileName;
+                MyImage? image = null;
                 if (filename != null)
                 {
-                    var image = new MyImage(filename);
+                    try {
+                        image = new MyImage(filename);
+                    } catch (Exception ex) {
+                        MessageBox.Show("Error while loading the image: " + ex.Message);
+                        return;
+                    }
+                    
                     var window = new MainWindow(image, filename, this.debugConsole);
                     window.Show();
                     this.Close();

@@ -488,6 +488,43 @@ namespace PinteUI
 
             RenderPreview();
         }
+
+        /// <summary>
+        /// Create a BMP bomb: a file with huge dimensions but only virtually.
+        /// </summary>
+        public void CreateBMPBomb(object sender, RoutedEventArgs e) {
+            CloseOpenedMenus();
+            var PopupAsk = new OperationSettingsPopup("Create BMP bomb", this.debugConsole)
+                .Int("Width", "The width of the fake image.", 1, int.MaxValue, 100_000)
+                .Int("Height", "The height of the image.", 1, int.MaxValue, 100_000)
+                .Finish();
+
+            PopupAsk.ShowDialog();
+            if (!PopupAsk.Result) return;
+
+            uint width = (uint)PopupAsk.GetInt(0);
+            uint height = (uint)PopupAsk.GetInt(1);
+
+            var fileDialog = new SaveFileDialog();
+            fileDialog.Filter = "BMP files (*.bmp)|*.bmp";
+            fileDialog.Title = "Save the BMP bomb";
+            fileDialog.ShowDialog();
+
+            double sizeGB = (double)(width/1000 * height/1000 * 3) / 1000;
+
+            if (fileDialog.FileName == "") return;
+
+            this.debugConsole.WriteLine("Creating BMP bomb with size " + width + "x" + height + ", size = " + sizeGB + " GB, => " + fileDialog.FileName);
+            
+            try {
+                MyImage.CreateBMPBomb(fileDialog.FileName, width, height);
+            } catch (Exception ex) {
+                MessageBox.Show(ex.Source + ": " + ex.Message);
+                return;
+            }
+
+            MessageBox.Show("BMP bomb created: estimated RAM usage = " + sizeGB + " GB");
+        }
         #endregion
     }
 }
