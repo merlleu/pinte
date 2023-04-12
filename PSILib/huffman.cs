@@ -72,6 +72,9 @@ public class Huffman1D {
         root = nodes[0];
     }
 
+    /// <summary>
+    /// Assign an ID to each node of the tree.
+    /// </summary>
     private void IndexTree(PixelNode node) {
         if (node.IsLeaf) {
             pixelToBytes[node.Pixel] = currentId;
@@ -87,9 +90,14 @@ public class Huffman1D {
     /// </summary>
     /// <returns>The encoded matrix</returns>
     public byte[] Encode() {
+        Console.WriteLine("Encoding...");
         FindFrequencies();
+        Console.WriteLine("Frequencies found.");
         BuildTree();
+        Console.WriteLine("Tree built.");
         IndexTree(root);
+        Console.WriteLine("Tree indexed.");
+        
         // clear unused data
         nodes = null;
         occurences = null;

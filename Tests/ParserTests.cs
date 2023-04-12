@@ -105,5 +105,14 @@ namespace Tests
             img3.EdgeDetection(gray: false);
             Utils.CompareWithRef(img3, "EdgeDetectioncoco");
         }
+
+        [Fact]
+        public void Compression() {
+            // we just create the generated folder if it doesn't exist
+            Utils.InitOutputFolder();
+            
+            var img = new PSILib.MyImage(Utils.GetPath("resources/wl1.bmp"));
+            img.Save("test.beermp", compression: PSILib.Constants.BI_HUFFMAN1D);
+        }
     }
 }

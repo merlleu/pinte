@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using PSILib;
+using System.IO;
 
 namespace PinteUI;
 
@@ -27,6 +28,10 @@ public partial class DebugConsole : Window
         Enabled = Environment.GetCommandLineArgs().Contains("--debug");
         if (Enabled) this.Show();
         currentParent = parentId;
+
+        // redirect console output to the textbox
+        Console.SetOut(new TextBoxStreamWriter(outputTextBox));
+
     }
     
     public void WriteLine(string text)
@@ -50,4 +55,26 @@ public partial class DebugConsole : Window
         WriteLine($"[DebugConsole] Setting Parent: {parentId}");
         currentParent = parentId;
     }
+}
+
+public class TextBoxStreamWriter : TextWriter
+{
+    private TextBox _output;
+
+    public TextBoxStreamWriter(TextBox output)
+    {
+        _output = output;
+    }
+
+    public override void Write(char value)
+    {
+        base.Write(value);
+        _output.Dispatcher.Invoke(() =>
+        {
+            _output.AppendText(value.ToString());
+            _output.ScrollToEnd();
+        });
+    }
+
+    public override Encoding Encoding => Encoding.UTF8;
 }

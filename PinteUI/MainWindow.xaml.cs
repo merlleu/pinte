@@ -39,7 +39,11 @@ namespace PinteUI
             this.debugConsole = debugConsole;
             debugConsole.SetParent(windowID);
             this.Height = image.Height + 200;
+            if (this.Height < 400) this.Height = 400;
+            
             this.Width = image.Width + 100;
+            if (this.Width < 600) this.Width = 600;
+
             RenderPreview();
         }
 
@@ -99,7 +103,8 @@ namespace PinteUI
                 if (filename != null)
                 {
                     int compression = filename.EndsWith(".beermp") ? PSILib.Constants.BI_HUFFMAN1D : 0;
-                    this.image.Save(filename);
+                    this.debugConsole.WriteLine($"[Main/SaveFile_Click] Saving image to {filename} with compression {compression}");
+                    this.image.Save(filename, compression: compression);
                 }
             }
         }
