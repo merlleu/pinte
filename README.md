@@ -1,4 +1,4 @@
-# PINTE
+# PINTE 🍺
 
 [![Logo](resources/pinte.png)](resources/logo.png)
 
