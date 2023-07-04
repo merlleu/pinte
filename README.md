@@ -11,6 +11,8 @@ To run the Pinte (created using WPF), just execute the following command in the 
 $ dotnet run --project PinteUI
 ```
 
+[![Pinte UI](resources/pinte_screen.png)](resources/pinte_screen.png)
+
 ## Tests
 We have static tests in place to avoid regressions. To run them, execute the following command in the root directory of the project:
 ```bash
